@@ -4,7 +4,7 @@ My program for generating lookup tables for the mobile game My Little Pony by Ga
 
 4PDA: https://4pda.to/forum/index.php?showtopic=396777&view=findpost&p=121826352
 
-Online Example (8.3.0g): [HTML/index.html](https://jackiewaltryan.github.io/tablecreator/HTML/index.html)
+Online Example: [HTML/index.html](https://jackiewaltryan.github.io/tablecreator/HTML/index.html)
 
 ### License
 
