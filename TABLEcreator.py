@@ -211,11 +211,12 @@ def load_file_settings():
 
 
 def load_russian_strings():
+    current_file = ""
     try:
-        russian_list = {}
         if exists(path="000_and_startup_common/russian.txt"):
-            print("2: Обработка файла 000_and_startup_common/russian.txt.\n")
-            with open(file="000_and_startup_common/russian.txt",
+            current_file, russian_list = "russian.txt", {}
+            print(f"2: Обработка файла 000_and_startup_common/{current_file}.\n")
+            with open(file=f"000_and_startup_common/{current_file}",
                       mode="r",
                       encoding="UTF-8") as russian_file:
                 for line in russian_file.readlines():
@@ -223,23 +224,32 @@ def load_russian_strings():
                     if len(data) == 2 and data[0] != "":
                         russian_list.update({data[0].strip(): data[1].strip()})
                 return russian_list
+        elif exists(path="000_and_startup_common/russian.json"):
+            current_file = "russian.json"
+            print(f"2: Обработка файла 000_and_startup_common/{current_file}.\n")
+            with open(file=f"000_and_startup_common/{current_file}",
+                      mode="r",
+                      encoding="UTF-8") as russian_file:
+                data = loads(s=russian_file.read())
+                return data
         else:
-            print("[ERROR] Отсутствует папка 000_and_startup_common или в ней нет файла russian.txt. "
+            print("[ERROR] Отсутствует папка 000_and_startup_common или в ней нет файла russian.txt или russian.json. "
                   "Разархивируйте архив 000_and_startup_common.ark используя программу ARKdumper. "
                   "В настройках программы ARKdumper обязательно установите Convert = 1.\n")
             return None
     except Exception:
-        print("[ERROR] Во время обработки файла 000_and_startup_common/russian.txt возникла ошибка. "
-              "Возможно данные в файле повреждены или нет прав на чтение файлов.\n")
+        print(f"[ERROR] Во время обработки файла 000_and_startup_common/{current_file} возникла ошибка. "
+              f"Возможно данные в файле повреждены или нет прав на чтение файлов.\n")
         return None
 
 
 def load_english_strings():
+    current_file = ""
     try:
-        english_list = {}
         if exists(path="000_and_startup_common/english.txt"):
-            print("3: Обработка файла 000_and_startup_common/english.txt.\n")
-            with open(file="000_and_startup_common/english.txt",
+            current_file, english_list = "english.txt", {}
+            print(f"3: Обработка файла 000_and_startup_common/{current_file}.\n")
+            with open(file=f"000_and_startup_common/{current_file}",
                       mode="r",
                       encoding="UTF-8") as english_file:
                 for line in english_file.readlines():
@@ -247,14 +257,22 @@ def load_english_strings():
                     if len(data) == 2 and data[0] != "":
                         english_list.update({data[0].strip(): data[1].strip()})
                 return english_list
+        elif exists(path="000_and_startup_common/english.json"):
+            current_file = "english.json"
+            print(f"3: Обработка файла 000_and_startup_common/{current_file}.\n")
+            with open(file=f"000_and_startup_common/{current_file}",
+                      mode="r",
+                      encoding="UTF-8") as english_file:
+                data = loads(s=english_file.read())
+                return data
         else:
-            print("[ERROR] Отсутствует папка 000_and_startup_common или в ней нет файла english.txt. "
+            print("[ERROR] Отсутствует папка 000_and_startup_common или в ней нет файла english.txt или english.json. "
                   "Разархивируйте архив 000_and_startup_common.ark используя программу ARKdumper. "
                   "В настройках программы ARKdumper обязательно установите Convert = 1.\n")
             return None
     except Exception:
-        print("[ERROR] Во время обработки файла 000_and_startup_common/english.txt возникла ошибка. "
-              "Возможно данные в файле повреждены или нет прав на чтение файлов.\n")
+        print(f"[ERROR] Во время обработки файла 000_and_startup_common/{current_file} возникла ошибка. "
+              f"Возможно данные в файле повреждены или нет прав на чтение файлов.\n")
         return None
 
 
