@@ -47,7 +47,7 @@ jobs:
         
       - name: Build distribution
         run: |
-          pyinstaller --noconfirm --onefile --add-data "fake.json:." --add-data "template_files.html:." --add-data "template_index.html:." TABLEcreator.py
+          pyinstaller --noconfirm --onefile --add-data "template;template/" --add-data "fake.json;." --add-data "parsers.py;." TABLEcreator.py
         
       - name: Create release
         id: create_release

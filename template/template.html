@@ -1,0 +1,51 @@
+<script>
+    let data = {{ data }};
+</script>
+
+<!DOCTYPE HTML>
+<html lang="ru">
+    <head>
+    	<title>{{ cat }}</title>
+        <meta charset="UTF-8"/>
+        <meta name="description" content="{{ cat }}"/>
+        <link rel="icon" type="image/png" href="data:image/png;base64, {{ icon }}">
+        <link type="text/css" rel="stylesheet" href="template.css">
+        <script type="text/javascript" src="template.js"></script>
+        <style>
+            {{ style }}
+        </style>
+        <script>
+        	{{ script }}
+        </script>
+    </head>
+    <body>
+        <div id="background"></div>
+        <div id="zoom"></div>
+        <div id="content">
+            <table>
+                <thead>
+                    <tr>
+                        <th colspan="100">
+                            <label>
+                                <input id="input" type="text" placeholder="Поиск (можно вводить несколько значений через запятую)"/>
+                                <script>
+                                    let input = document.getElementById("input");
+
+                                    input.addEventListener("keyup", (event) => {
+                                        createTable(event.target.value);
+                                    });
+                                </script>
+                            </label>
+                        </th>
+                    </tr>
+                    <tr id="thead"></tr>
+                </thead>
+                <tbody id="tbody">
+                    <script>
+                        createTable();
+                    </script>
+                </tbody>
+            </table>
+        </div>
+    </body>
+</html>
