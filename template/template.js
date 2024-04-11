@@ -33,9 +33,9 @@ function zoomOut() {
     zoom.style.display = "none";
 }
 
-let URLparams = new URLSearchParams(location.search);
+let getURL = new URL(location.href);
 
-function createTable(search = URLparams.get("search")) {
+function createTable(search = (getURL.searchParams.has("search") ? decodeURIComponent(getURL.searchParams.get("search")) : "")) {
     let thead = document.getElementById("thead");
 
     if (thead.children.length === 0) {
@@ -66,6 +66,12 @@ function createTable(search = URLparams.get("search")) {
                 search_input.value = search;
             }
 
+            if (decodeURIComponent(getURL.searchParams.get("search")) !== search) {
+                getURL.searchParams.set("search", encodeURIComponent(search));
+
+                history.pushState(null, null, getURL.href);
+            }
+
             let text = item;
 
             for (let param in data[item]) {
@@ -80,6 +86,12 @@ function createTable(search = URLparams.get("search")) {
 
             if (!result) {
                 continue;
+            }
+        } else {
+            if (getURL.searchParams.has("search")) {
+                getURL.searchParams.delete("search");
+
+                history.pushState(null, null, getURL.href);
             }
         }
 
