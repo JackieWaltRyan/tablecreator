@@ -1,6 +1,6 @@
-from base64 import b64encode
+from utils import DATA, load_fake, load_image, seconds_to_time
 
-FUNCTIONS, DESCRIPTIONS = {}, {}
+FUNCTIONS = {}
 
 CURRENCY = {"1": "Битсы",
             "2": "Камни",
@@ -34,81 +34,66 @@ CONSUMES = {"XP": "Опыт",
             "MinecartWheel": "Колеса"}
 
 
-def seconds_to_time(s):
-    try:
-        sec = int(float(s))
-
-        seconds = (sec % 60)
-        minutes = (int(sec / 60) % 60)
-        hours = int(sec / 3600)
-
-        minutes_string = str(minutes).zfill(2)
-        seconds_string = str(seconds).zfill(2)
-
-        return f"{hours}:{minutes_string}:{seconds_string}" if (hours > 0) else f"{minutes_string}:{seconds_string}"
-    except Exception:
-        return "--:--"
-
-
 class Parser:
     def __init__(self, category, description=""):
         self.category = category
         self.description = description
 
+        if "descriptions" not in DATA:
+            DATA.update({"descriptions": {self.category: self.description}})
+        else:
+            DATA["descriptions"].update({self.category: self.description})
+
     def __call__(self, function):
         FUNCTIONS.update({self.category: function})
-        DESCRIPTIONS.update({self.category: self.description})
 
-        def decorator(**kwargs):
-            return function(**kwargs)
+        def decorator(item, category=self.category):
+            return function(item, category)
 
         return decorator
 
 
 @Parser(category="PonyPet",
         description="Питомцы")
-def ponypet(**kwargs):
+def ponypet(item, category):
     try:
-        item, russian, english, images = kwargs["item"], kwargs["russian"], kwargs["english"], kwargs["images"]
-        mapzones, shopdata, fake, lite = kwargs["mapzones"], kwargs["shopdata"], kwargs["fake"], kwargs["lite"]
-
-        res_icon, res_image = fake["all"], fake["all"]
+        res_icon, res_image = load_fake(file="all",
+                                        category=category), load_fake(file="all",
+                                                                      category=category)
         res_name_rus, res_name_eng = "", ""
         res_owner, res_bonus, res_distance, res_time, res_additionally = "", [], [], "", []
         res_sity, res_level, res_cost = [], "", ""
 
         # gameobjectdata:
         try:
-            with open(file=images[item.find_all(name="Shop",
-                                                limit=1)[0]["Icon"].replace("gui/",
-                                                                            "").replace(".png",
-                                                                                        "")],
-                      mode="rb") as image_file:
-                res_icon = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                 errors="ignore")
+            icon = load_image(image=item.find_all(name="Shop",
+                                                  limit=1)[0]["Icon"],
+                              category=category)
+
+            if icon:
+                res_icon = icon
         except Exception:
             pass
 
         try:
-            with open(file=images[item.find_all(name="PetUniqueIcon",
-                                                limit=1)[0]["Icon"].replace("gui/",
-                                                                            "").replace(".png",
-                                                                                        "")],
-                      mode="rb") as image_file:
-                res_image = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                  errors="ignore")
+            image = load_image(image=item.find_all(name="PetUniqueIcon",
+                                                   limit=1)[0]["Icon"],
+                               category=category)
+
+            if image:
+                res_image = image
         except Exception:
             pass
 
         try:
-            res_name_rus = russian[item.find_all(name="Name",
-                                                 limit=1)[0]["Unlocal"]]
+            res_name_rus = DATA["russian"][item.find_all(name="Name",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
         try:
-            res_name_eng = english[item.find_all(name="Name",
-                                                 limit=1)[0]["Unlocal"]]
+            res_name_eng = DATA["english"][item.find_all(name="Name",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
@@ -176,29 +161,29 @@ def ponypet(**kwargs):
 
         # shopdata:
         try:
-            for mz in shopdata[item["ID"]]["MapZone"]:
+            for mz in DATA["shopdata"][item["ID"]]["MapZone"]:
                 try:
-                    res_sity.append(russian[mapzones[mz]].title())
+                    res_sity.append(DATA["russian"][DATA["mapzones"][mz]].title())
                 except Exception:
                     pass
         except Exception:
             pass
 
         try:
-            res_level = shopdata[item["ID"]]["UnlockValue"]
+            res_level = DATA["shopdata"][item["ID"]]["UnlockValue"]
         except Exception:
             pass
 
         try:
-            c_type = shopdata[item["ID"]]["CurrencyType"]
-            c_value = shopdata[item["ID"]]["Cost"]
+            c_type = DATA["shopdata"][item["ID"]]["CurrencyType"]
+            c_value = DATA["shopdata"][item["ID"]]["Cost"]
 
             if (c_type != "0") and (c_value != "0"):
                 res_cost = f"{CURRENCY[c_type]}: {c_value}"
         except Exception:
             pass
 
-        if lite:
+        if DATA["settings"]["Lite"]:
             return {"Изображение": ([res_image, res_icon] if (res_image != res_icon) else [res_image]),
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus])}
         else:
@@ -218,61 +203,58 @@ def ponypet(**kwargs):
 
 @Parser(category="ProfileAvatarFrame",
         description="Рамки аватаров")
-def profileavatarframe(**kwargs):
+def profileavatarframe(item, category):
     try:
-        item, russian, english, images = kwargs["item"], kwargs["russian"], kwargs["english"], kwargs["images"]
-        mapzones, shopdata, fake, lite = kwargs["mapzones"], kwargs["shopdata"], kwargs["fake"], kwargs["lite"]
-
-        res_icon, res_image = fake["all"], fake["all"]
+        res_icon, res_image = load_fake(file="all",
+                                        category=category), load_fake(file="all",
+                                                                      category=category)
         res_name_rus, res_name_eng = "", ""
         res_cost = ""
 
         # gameobjectdata:
         try:
-            with open(file=images[item.find_all(name="Shop",
-                                                limit=1)[0]["Icon"].replace("gui/",
-                                                                            "").replace(".png",
-                                                                                        "")],
-                      mode="rb") as image_file:
-                res_icon = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                 errors="ignore")
+            icon = load_image(image=item.find_all(name="Shop",
+                                                  limit=1)[0]["Icon"],
+                              category=category)
+
+            if icon:
+                res_icon = icon
         except Exception:
             pass
 
         try:
-            with open(file=images[item.find_all(name="Settings",
-                                                limit=1)[0]["PictureActive"].replace("gui/",
-                                                                                     "").replace(".png",
-                                                                                                 "")],
-                      mode="rb") as image_file:
-                res_image = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                  errors="ignore")
+            image = load_image(image=item.find_all(name="Settings",
+                                                   limit=1)[0]["PictureActive"],
+                               category=category)
+
+            if image:
+                res_image = image
         except Exception:
             pass
 
         try:
-            res_name_rus = russian[item.find_all(name="Shop",
-                                                 limit=1)[0]["Label"]]
+            res_name_rus = DATA["russian"][item.find_all(name="Shop",
+                                                         limit=1)[0]["Label"]]
         except Exception:
             pass
 
         try:
-            res_name_eng = english[item.find_all(name="Shop",
-                                                 limit=1)[0]["Label"]]
+            res_name_eng = DATA["english"][item.find_all(name="Shop",
+                                                         limit=1)[0]["Label"]]
         except Exception:
             pass
 
         # shopdata:
         try:
-            c_type = shopdata[item["ID"]]["CurrencyType"]
-            c_value = shopdata[item["ID"]]["Cost"]
+            c_type = DATA["shopdata"][item["ID"]]["CurrencyType"]
+            c_value = DATA["shopdata"][item["ID"]]["Cost"]
 
             if (c_type != "0") and (c_value != "0"):
                 res_cost = f"{CURRENCY[c_type]}: {c_value}"
         except Exception:
             pass
 
-        if lite:
+        if DATA["settings"]["Lite"]:
             return {"Изображение": ([res_image, res_icon] if (res_image != res_icon) else [res_image]),
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus])}
         else:
@@ -285,47 +267,44 @@ def profileavatarframe(**kwargs):
 
 @Parser(category="ProfileAvatar",
         description="Аватары")
-def profileavatar(**kwargs):
+def profileavatar(item, category):
     try:
-        item, russian, english, images = kwargs["item"], kwargs["russian"], kwargs["english"], kwargs["images"]
-        mapzones, shopdata, fake, lite = kwargs["mapzones"], kwargs["shopdata"], kwargs["fake"], kwargs["lite"]
-
-        res_icon, res_image = fake["all"], fake["all"]
+        res_icon, res_image = load_fake(file="all",
+                                        category=category), load_fake(file="all",
+                                                                      category=category)
         res_name_rus, res_name_eng = "", ""
         res_pony, res_cost = "", ""
 
         # gameobjectdata:
         try:
-            with open(file=images[item.find_all(name="Shop",
-                                                limit=1)[0]["Icon"].replace("gui/",
-                                                                            "").replace(".png",
-                                                                                        "")],
-                      mode="rb") as image_file:
-                res_icon = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                 errors="ignore")
+            icon = load_image(image=item.find_all(name="Shop",
+                                                  limit=1)[0]["Icon"],
+                              category=category)
+
+            if icon:
+                res_icon = icon
         except Exception:
             pass
 
         try:
-            with open(file=images[item.find_all(name="Settings",
-                                                limit=1)[0]["PictureActive"].replace("gui/",
-                                                                                     "").replace(".png",
-                                                                                                 "")],
-                      mode="rb") as image_file:
-                res_image = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                  errors="ignore")
+            image = load_image(image=item.find_all(name="Settings",
+                                                   limit=1)[0]["PictureActive"],
+                               category=category)
+
+            if image:
+                res_image = image
         except Exception:
             pass
 
         try:
-            res_name_rus = russian[item.find_all(name="Shop",
-                                                 limit=1)[0]["Label"]]
+            res_name_rus = DATA["russian"][item.find_all(name="Shop",
+                                                         limit=1)[0]["Label"]]
         except Exception:
             pass
 
         try:
-            res_name_eng = english[item.find_all(name="Shop",
-                                                 limit=1)[0]["Label"]]
+            res_name_eng = DATA["english"][item.find_all(name="Shop",
+                                                         limit=1)[0]["Label"]]
         except Exception:
             pass
 
@@ -337,15 +316,15 @@ def profileavatar(**kwargs):
 
         # shopdata:
         try:
-            c_type = shopdata[item["ID"]]["CurrencyType"]
-            c_value = shopdata[item["ID"]]["Cost"]
+            c_type = DATA["shopdata"][item["ID"]]["CurrencyType"]
+            c_value = DATA["shopdata"][item["ID"]]["Cost"]
 
             if (c_type != "0") and (c_value != "0"):
                 res_cost = f"{CURRENCY[c_type]}: {c_value}"
         except Exception:
             pass
 
-        if lite:
+        if DATA["settings"]["Lite"]:
             return {"Изображение": ([res_image, res_icon] if (res_image != res_icon) else [res_image]),
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus])}
         else:
@@ -359,36 +338,33 @@ def profileavatar(**kwargs):
 
 @Parser(category="ProgressBooster",
         description="Бустеры")
-def progressbooster(**kwargs):
+def progressbooster(item, category):
     try:
-        item, russian, english, images = kwargs["item"], kwargs["russian"], kwargs["english"], kwargs["images"]
-        mapzones, shopdata, fake, lite = kwargs["mapzones"], kwargs["shopdata"], kwargs["fake"], kwargs["lite"]
-
-        res_icon = fake["all"]
+        res_icon = load_fake(file="all",
+                             category=category)
         res_name_rus, res_name_eng = "", ""
         res_type, res_time, res_multiplier, res_cost = "", "", "", ""
 
         # gameobjectdata:
         try:
-            with open(file=images[item.find_all(name="Shop",
-                                                limit=1)[0]["Icon"].replace("gui/",
-                                                                            "").replace(".png",
-                                                                                        "")],
-                      mode="rb") as image_file:
-                res_icon = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                 errors="ignore")
+            icon = load_image(image=item.find_all(name="Shop",
+                                                  limit=1)[0]["Icon"],
+                              category=category)
+
+            if icon:
+                res_icon = icon
         except Exception:
             pass
 
         try:
-            res_name_rus = russian[item.find_all(name="Shop",
-                                                 limit=1)[0]["Label"]]
+            res_name_rus = DATA["russian"][item.find_all(name="Shop",
+                                                         limit=1)[0]["Label"]]
         except Exception:
             pass
 
         try:
-            res_name_eng = english[item.find_all(name="Shop",
-                                                 limit=1)[0]["Label"]]
+            res_name_eng = DATA["english"][item.find_all(name="Shop",
+                                                         limit=1)[0]["Label"]]
         except Exception:
             pass
 
@@ -418,15 +394,15 @@ def progressbooster(**kwargs):
 
         # shopdata:
         try:
-            c_type = shopdata[item["ID"]]["CurrencyType"]
-            c_value = shopdata[item["ID"]]["Cost"]
+            c_type = DATA["shopdata"][item["ID"]]["CurrencyType"]
+            c_value = DATA["shopdata"][item["ID"]]["Cost"]
 
             if (c_type != "0") and (c_value != "0"):
                 res_cost = f"{CURRENCY[c_type]}: {c_value}"
         except Exception:
             pass
 
-        if lite:
+        if DATA["settings"]["Lite"]:
             return {"Изображение": [res_icon],
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus])}
         else:
@@ -442,12 +418,11 @@ def progressbooster(**kwargs):
 
 @Parser(category="Totem",
         description="Тотемы")
-def totem(**kwargs):
+def totem(item, category):
     try:
-        item, russian, english, images = kwargs["item"], kwargs["russian"], kwargs["english"], kwargs["images"]
-        mapzones, shopdata, fake, lite = kwargs["mapzones"], kwargs["shopdata"], kwargs["fake"], kwargs["lite"]
-
-        res_icon, res_image = fake["all"], fake["all"]
+        res_icon, res_image = load_fake(file="all",
+                                        category=category), load_fake(file="all",
+                                                                      category=category)
         res_name_rus, res_name_eng = "", ""
         res_desc_rus, res_desc_eng = "", ""
         res_size, res_spawn, res_elements, res_production, res_mixing = "", "", [], [], []
@@ -455,48 +430,46 @@ def totem(**kwargs):
 
         # gameobjectdata:
         try:
-            with open(file=images[item.find_all(name="Production",
-                                                limit=1)[0]["ShopIcon"].replace("gui/",
-                                                                                "").replace(".png",
-                                                                                            "")],
-                      mode="rb") as image_file:
-                res_icon = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                 errors="ignore")
+            icon = load_image(image=item.find_all(name="Production",
+                                                  limit=1)[0]["ShopIcon"],
+                              category=category)
+
+            if icon:
+                res_icon = icon
         except Exception:
             pass
 
         try:
-            with open(file=images[item.find_all(name="Production",
-                                                limit=1)[0]["ProductIcon"].replace("gui/",
-                                                                                   "").replace(".png",
-                                                                                               "")],
-                      mode="rb") as image_file:
-                res_image = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                  errors="ignore")
+            image = load_image(image=item.find_all(name="Production",
+                                                   limit=1)[0]["ProductIcon"],
+                               category=category)
+
+            if image:
+                res_image = image
         except Exception:
             pass
 
         try:
-            res_name_rus = russian[item.find_all(name="Name",
-                                                 limit=1)[0]["Unlocal"]]
+            res_name_rus = DATA["russian"][item.find_all(name="Name",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
         try:
-            res_name_eng = english[item.find_all(name="Name",
-                                                 limit=1)[0]["Unlocal"]]
+            res_name_eng = DATA["english"][item.find_all(name="Name",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
         try:
-            res_desc_rus = russian[item.find_all(name="Description",
-                                                 limit=1)[0]["Unlocal"]]
+            res_desc_rus = DATA["russian"][item.find_all(name="Description",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
         try:
-            res_desc_eng = english[item.find_all(name="Description",
-                                                 limit=1)[0]["Unlocal"]]
+            res_desc_eng = DATA["english"][item.find_all(name="Description",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
@@ -601,15 +574,15 @@ def totem(**kwargs):
 
         # shopdata:
         try:
-            c_type = shopdata[item["ID"]]["CurrencyType"]
-            c_value = shopdata[item["ID"]]["Cost"]
+            c_type = DATA["shopdata"][item["ID"]]["CurrencyType"]
+            c_value = DATA["shopdata"][item["ID"]]["Cost"]
 
             if (c_type != "0") and (c_value != "0"):
                 res_cost = f"{CURRENCY[c_type]}: {c_value}"
         except Exception:
             pass
 
-        if lite:
+        if DATA["settings"]["Lite"]:
             return {"Изображение": ([res_icon, res_image] if (res_image != res_icon) else [res_icon]),
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus])}
         else:
@@ -630,26 +603,21 @@ def totem(**kwargs):
 
 @Parser(category="Ingredient",
         description="Ингредиенты")
-def ingredient(**kwargs):
+def ingredient(item, category):
     try:
-        item, russian, english, images = kwargs["item"], kwargs["russian"], kwargs["english"], kwargs["images"]
-        mapzones, shopdata, fake, lite = kwargs["mapzones"], kwargs["shopdata"], kwargs["fake"], kwargs["lite"]
-
-        res_icon = fake["all"]
+        res_icon = load_fake(file="all",
+                             category=category)
         res_name_eng = ""
         res_level, res_cost = "", ""
 
         # gameobjectdata:
         try:
-            file = item.find_all(name="Production",
-                                 limit=1)[0]["IconProductFrame"].replace("gui/",
-                                                                         "").replace(".png",
-                                                                                     "")
+            icon = load_image(image=item.find_all(name="Production",
+                                                  limit=1)[0]["IconProductFrame"],
+                              category=category)
 
-            with open(file=images[file],
-                      mode="rb") as image_file:
-                res_icon = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                 errors="ignore")
+            if icon:
+                res_icon = icon
         except Exception:
             pass
 
@@ -661,20 +629,20 @@ def ingredient(**kwargs):
 
         # shopdata:
         try:
-            res_level = shopdata[item["ID"]]["UnlockValue"]
+            res_level = DATA["shopdata"][item["ID"]]["UnlockValue"]
         except Exception:
             pass
 
         try:
-            c_type = shopdata[item["ID"]]["CurrencyType"]
-            c_value = shopdata[item["ID"]]["Cost"]
+            c_type = DATA["shopdata"][item["ID"]]["CurrencyType"]
+            c_value = DATA["shopdata"][item["ID"]]["Cost"]
 
             if (c_type != "0") and (c_value != "0"):
                 res_cost = f"{CURRENCY[c_type]}: {c_value}"
         except Exception:
             pass
 
-        if lite:
+        if DATA["settings"]["Lite"]:
             return {"Изображение": [res_icon],
                     "Имя": [res_name_eng]}
         else:
@@ -688,37 +656,34 @@ def ingredient(**kwargs):
 
 @Parser(category="Theme",
         description="Темы")
-def theme(**kwargs):
+def theme(item, category):
     try:
-        item, russian, english, images = kwargs["item"], kwargs["russian"], kwargs["english"], kwargs["images"]
-        mapzones, shopdata, fake, lite = kwargs["mapzones"], kwargs["shopdata"], kwargs["fake"], kwargs["lite"]
-
-        res_icon = fake["all"]
+        res_icon = load_fake(file="all",
+                             category=category)
         res_name_rus, res_name_eng = "", ""
         res_music, res_bonus, res_season, res_weather = "", "", "", ""
         res_sity, res_level, res_cost = [], "", ""
 
         # gameobjectdata:
         try:
-            with open(file=images[item.find_all(name="Appearance",
-                                                limit=1)[0]["Image"].replace("gui/",
-                                                                             "").replace(".png",
-                                                                                         "")],
-                      mode="rb") as image_file:
-                res_icon = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                 errors="ignore")
+            icon = load_image(image=item.find_all(name="Appearance",
+                                                  limit=1)[0]["Image"],
+                              category=category)
+
+            if icon:
+                res_icon = icon
         except Exception:
             pass
 
         try:
-            res_name_rus = russian[item.find_all(name="Appearance",
-                                                 limit=1)[0]["Name"]]
+            res_name_rus = DATA["russian"][item.find_all(name="Appearance",
+                                                         limit=1)[0]["Name"]]
         except Exception:
             pass
 
         try:
-            res_name_eng = english[item.find_all(name="Appearance",
-                                                 limit=1)[0]["Name"]]
+            res_name_eng = DATA["english"][item.find_all(name="Appearance",
+                                                         limit=1)[0]["Name"]]
         except Exception:
             pass
 
@@ -753,29 +718,29 @@ def theme(**kwargs):
 
         # shopdata:
         try:
-            for mz in shopdata[item["ID"]]["MapZone"]:
+            for mz in DATA["shopdata"][item["ID"]]["MapZone"]:
                 try:
-                    res_sity.append(russian[mapzones[mz]].title())
+                    res_sity.append(DATA["russian"][DATA["mapzones"][mz]].title())
                 except Exception:
                     pass
         except Exception:
             pass
 
         try:
-            res_level = shopdata[item["ID"]]["UnlockValue"]
+            res_level = DATA["shopdata"][item["ID"]]["UnlockValue"]
         except Exception:
             pass
 
         try:
-            c_type = shopdata[item["ID"]]["CurrencyType"]
-            c_value = shopdata[item["ID"]]["Cost"]
+            c_type = DATA["shopdata"][item["ID"]]["CurrencyType"]
+            c_value = DATA["shopdata"][item["ID"]]["Cost"]
 
             if (c_type != "0") and (c_value != "0"):
                 res_cost = f"{CURRENCY[c_type]}: {c_value}"
         except Exception:
             pass
 
-        if lite:
+        if DATA["settings"]["Lite"]:
             return {"Изображение": [res_icon],
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus])}
         else:
@@ -794,12 +759,10 @@ def theme(**kwargs):
 
 @Parser(category="Decore",
         description="Декорации")
-def decore(**kwargs):
+def decore(item, category):
     try:
-        item, russian, english, images = kwargs["item"], kwargs["russian"], kwargs["english"], kwargs["images"]
-        mapzones, shopdata, fake, lite = kwargs["mapzones"], kwargs["shopdata"], kwargs["fake"], kwargs["lite"]
-
-        res_icon = fake["decore"]
+        res_icon = load_fake(file="decore",
+                             category=category)
         res_name_rus, res_name_eng = "", ""
         res_pro, res_pro_bonus = "", []
         res_size, res_consume, res_xp = "", [], ""
@@ -807,25 +770,24 @@ def decore(**kwargs):
 
         # gameobjectdata:
         try:
-            with open(file=images[item.find_all(name="Shop",
-                                                limit=1)[0]["Icon"].replace("gui/",
-                                                                            "").replace(".png",
-                                                                                        "")],
-                      mode="rb") as image_file:
-                res_icon = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                 errors="ignore")
+            icon = load_image(image=item.find_all(name="Shop",
+                                                  limit=1)[0]["Icon"],
+                              category=category)
+
+            if icon:
+                res_icon = icon
         except Exception:
             pass
 
         try:
-            res_name_rus = russian[item.find_all(name="Name",
-                                                 limit=1)[0]["Unlocal"]]
+            res_name_rus = DATA["russian"][item.find_all(name="Name",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
         try:
-            res_name_eng = english[item.find_all(name="Name",
-                                                 limit=1)[0]["Unlocal"]]
+            res_name_eng = DATA["english"][item.find_all(name="Name",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
@@ -916,29 +878,29 @@ def decore(**kwargs):
 
         # shopdata:
         try:
-            for mz in shopdata[item["ID"]]["MapZone"]:
+            for mz in DATA["shopdata"][item["ID"]]["MapZone"]:
                 try:
-                    res_sity.append(russian[mapzones[mz]].title())
+                    res_sity.append(DATA["russian"][DATA["mapzones"][mz]].title())
                 except Exception:
                     pass
         except Exception:
             pass
 
         try:
-            res_level = shopdata[item["ID"]]["UnlockValue"]
+            res_level = DATA["shopdata"][item["ID"]]["UnlockValue"]
         except Exception:
             pass
 
         try:
-            c_type = shopdata[item["ID"]]["CurrencyType"]
-            c_value = shopdata[item["ID"]]["Cost"]
+            c_type = DATA["shopdata"][item["ID"]]["CurrencyType"]
+            c_value = DATA["shopdata"][item["ID"]]["Cost"]
 
             if (c_type != "0") and (c_value != "0"):
                 res_cost = f"{CURRENCY[c_type]}: {c_value}"
         except Exception:
             pass
 
-        if lite:
+        if DATA["settings"]["Lite"]:
             return {"Изображение": [res_icon],
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus])}
         else:
@@ -958,12 +920,11 @@ def decore(**kwargs):
 
 @Parser(category="Pony_House",
         description="Дома и Магазины")
-def pony_house(**kwargs):
+def pony_house(item, category):
     try:
-        item, russian, english, images = kwargs["item"], kwargs["russian"], kwargs["english"], kwargs["images"]
-        mapzones, shopdata, fake, lite = kwargs["mapzones"], kwargs["shopdata"], kwargs["fake"], kwargs["lite"]
-
-        res_icon, res_image = fake["house"], fake["house"]
+        res_icon, res_image = load_fake(file="house",
+                                        category=category), load_fake(file="house",
+                                                                      category=category)
         res_name_rus, res_name_eng = "", ""
         res_size, res_construction, res_type, res_visitors, res_consumable, res_spawn = "", [], "", [], "", ""
         res_elements, res_xp, res_additionally = [], [], []
@@ -971,36 +932,34 @@ def pony_house(**kwargs):
 
         # gameobjectdata:
         try:
-            with open(file=images[item.find_all(name="Icon",
-                                                limit=1)[0]["BookIcon"].replace("gui/",
-                                                                                "").replace(".png",
-                                                                                            "")],
-                      mode="rb") as image_file:
-                res_icon = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                 errors="ignore")
+            icon = load_image(image=item.find_all(name="Icon",
+                                                  limit=1)[0]["BookIcon"],
+                              category=category)
+
+            if icon:
+                res_icon = icon
         except Exception:
             pass
 
         try:
-            with open(file=images[item.find_all(name="Shop",
-                                                limit=1)[0]["Icon"].replace("gui/",
-                                                                            "").replace(".png",
-                                                                                        "")],
-                      mode="rb") as image_file:
-                res_image = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                  errors="ignore")
+            image = load_image(image=item.find_all(name="Shop",
+                                                   limit=1)[0]["Icon"],
+                               category=category)
+
+            if image:
+                res_image = image
         except Exception:
             pass
 
         try:
-            res_name_rus = russian[item.find_all(name="Name",
-                                                 limit=1)[0]["Unlocal"]]
+            res_name_rus = DATA["russian"][item.find_all(name="Name",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
         try:
-            res_name_eng = english[item.find_all(name="Name",
-                                                 limit=1)[0]["Unlocal"]]
+            res_name_eng = DATA["english"][item.find_all(name="Name",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
@@ -1124,29 +1083,29 @@ def pony_house(**kwargs):
 
         # shopdata:
         try:
-            for mz in shopdata[item["ID"]]["MapZone"]:
+            for mz in DATA["shopdata"][item["ID"]]["MapZone"]:
                 try:
-                    res_sity.append(russian[mapzones[mz]].title())
+                    res_sity.append(DATA["russian"][DATA["mapzones"][mz]].title())
                 except Exception:
                     pass
         except Exception:
             pass
 
         try:
-            res_level = shopdata[item["ID"]]["UnlockValue"]
+            res_level = DATA["shopdata"][item["ID"]]["UnlockValue"]
         except Exception:
             pass
 
         try:
-            c_type = shopdata[item["ID"]]["CurrencyType"]
-            c_value = shopdata[item["ID"]]["Cost"]
+            c_type = DATA["shopdata"][item["ID"]]["CurrencyType"]
+            c_value = DATA["shopdata"][item["ID"]]["Cost"]
 
             if (c_type != "0") and (c_value != "0"):
                 res_cost = f"{CURRENCY[c_type]}: {c_value}"
         except Exception:
             pass
 
-        if lite:
+        if DATA["settings"]["Lite"]:
             return {"Изображение": ([res_image, res_icon] if (res_image != res_icon) else [res_image]),
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus])}
         else:
@@ -1170,12 +1129,11 @@ def pony_house(**kwargs):
 
 @Parser(category="Pony",
         description="Персонажи")
-def pony(**kwargs):
+def pony(item, category):
     try:
-        item, russian, english, images = kwargs["item"], kwargs["russian"], kwargs["english"], kwargs["images"]
-        mapzones, shopdata, fake, lite = kwargs["mapzones"], kwargs["shopdata"], kwargs["fake"], kwargs["lite"]
-
-        res_icon, res_image = fake["pony"]["icon"], fake["pony"]["image"]
+        res_icon, res_image = load_fake(file="pony",
+                                        category=category), load_fake(file="pony",
+                                                                      category=category)
         res_name_rus, res_name_eng = "", ""
         res_desc_rus, res_desc_eng = "", ""
         res_house, res_additionally, res_xp, res_sets, res_minigames, res_stars = "", [], "", [], [], []
@@ -1184,48 +1142,46 @@ def pony(**kwargs):
 
         # gameobjectdata:
         try:
-            with open(file=images[item.find_all(name="Icon",
-                                                limit=1)[0]["Url"].replace("gui/",
-                                                                           "").replace(".png",
-                                                                                       "")],
-                      mode="rb") as image_file:
-                res_icon = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                 errors="ignore")
+            icon = load_image(image=item.find_all(name="Icon",
+                                                  limit=1)[0]["Url"],
+                              category=category)
+
+            if icon:
+                res_icon = icon
         except Exception:
             pass
 
         try:
-            with open(file=images[item.find_all(name="Shop",
-                                                limit=1)[0]["Icon"].replace("gui/",
-                                                                            "").replace(".png",
-                                                                                        "")],
-                      mode="rb") as image_file:
-                res_image = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                  errors="ignore")
+            image = load_image(image=item.find_all(name="Shop",
+                                                   limit=1)[0]["Icon"],
+                               category=category)
+
+            if image:
+                res_image = image
         except Exception:
             pass
 
         try:
-            res_name_rus = russian[item.find_all(name="Name",
-                                                 limit=1)[0]["Unlocal"]]
+            res_name_rus = DATA["russian"][item.find_all(name="Name",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
         try:
-            res_name_eng = english[item.find_all(name="Name",
-                                                 limit=1)[0]["Unlocal"]]
+            res_name_eng = DATA["english"][item.find_all(name="Name",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
         try:
-            res_desc_rus = russian[item.find_all(name="Description",
-                                                 limit=1)[0]["Unlocal"]]
+            res_desc_rus = DATA["russian"][item.find_all(name="Description",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
         try:
-            res_desc_eng = english[item.find_all(name="Description",
-                                                 limit=1)[0]["Unlocal"]]
+            res_desc_eng = DATA["english"][item.find_all(name="Description",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
@@ -1269,7 +1225,7 @@ def pony(**kwargs):
             mg_rank = item.find_all(name="Minigames",
                                     limit=1)[0]["EXP_Rank"]
 
-            res_minigames.append(f"Сложность: {mg_rank}")
+            res_minigames.append(f"Коэффициент опыта: {mg_rank}")
         except Exception:
             pass
 
@@ -1377,29 +1333,29 @@ def pony(**kwargs):
 
         # shopdata:
         try:
-            for mz in shopdata[item["ID"]]["MapZone"]:
+            for mz in DATA["shopdata"][item["ID"]]["MapZone"]:
                 try:
-                    res_sity.append(russian[mapzones[mz]].title())
+                    res_sity.append(DATA["russian"][DATA["mapzones"][mz]].title())
                 except Exception:
                     pass
         except Exception:
             pass
 
         try:
-            res_level = shopdata[item["ID"]]["UnlockValue"]
+            res_level = DATA["shopdata"][item["ID"]]["UnlockValue"]
         except Exception:
             pass
 
         try:
-            c_type = shopdata[item["ID"]]["CurrencyType"]
-            c_value = shopdata[item["ID"]]["Cost"]
+            c_type = DATA["shopdata"][item["ID"]]["CurrencyType"]
+            c_value = DATA["shopdata"][item["ID"]]["Cost"]
 
             if (c_type != "0") and (c_value != "0"):
                 res_cost = f"{CURRENCY[c_type]}: {c_value}"
         except Exception:
             pass
 
-        if lite:
+        if DATA["settings"]["Lite"]:
             return {"Изображение": ([res_image, res_icon] if (res_image != res_icon) else [res_image]),
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus])}
         else:
@@ -1423,47 +1379,44 @@ def pony(**kwargs):
 
 @Parser(category="PonySet",
         description="Наборы костюмов")
-def ponyset(**kwargs):
+def ponyset(item, category):
     try:
-        item, russian, english, images = kwargs["item"], kwargs["russian"], kwargs["english"], kwargs["images"]
-        mapzones, shopdata, fake, lite = kwargs["mapzones"], kwargs["shopdata"], kwargs["fake"], kwargs["lite"]
-
-        res_icon, res_image = fake["all"], fake["all"]
+        res_icon, res_image = load_fake(file="all",
+                                        category=category), load_fake(file="all",
+                                                                      category=category)
         res_name_rus, res_name_eng = "", ""
         res_parts, res_subsets, res_type, res_bonus = [], [], "", ""
 
         # gameobjectdata:
         try:
-            with open(file=images[item.find_all(name="PonySet",
-                                                limit=1)[0]["Icon"].replace("gui/",
-                                                                            "").replace(".png",
-                                                                                        "")],
-                      mode="rb") as image_file:
-                res_icon = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                 errors="ignore")
+            icon = load_image(image=item.find_all(name="PonySet",
+                                                  limit=1)[0]["Icon"],
+                              category=category)
+
+            if icon:
+                res_icon = icon
         except Exception:
             pass
 
         try:
-            with open(file=images[item.find_all(name="PonySet",
-                                                limit=1)[0]["AltIcon"].replace("gui/",
-                                                                               "").replace(".png",
-                                                                                           "")],
-                      mode="rb") as image_file:
-                res_image = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                  errors="ignore")
+            image = load_image(image=item.find_all(name="PonySet",
+                                                   limit=1)[0]["AltIcon"],
+                               category=category)
+
+            if image:
+                res_image = image
         except Exception:
             pass
 
         try:
-            res_name_rus = russian[item.find_all(name="PonySet",
-                                                 limit=1)[0]["Localization"]]
+            res_name_rus = DATA["russian"][item.find_all(name="PonySet",
+                                                         limit=1)[0]["Localization"]]
         except Exception:
             pass
 
         try:
-            res_name_eng = english[item.find_all(name="PonySet",
-                                                 limit=1)[0]["Localization"]]
+            res_name_eng = DATA["english"][item.find_all(name="PonySet",
+                                                         limit=1)[0]["Localization"]]
         except Exception:
             pass
 
@@ -1526,7 +1479,7 @@ def ponyset(**kwargs):
         except Exception:
             pass
 
-        if lite:
+        if DATA["settings"]["Lite"]:
             return {"Изображение": ([res_icon, res_image] if (res_icon != res_image) else [res_icon]),
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus])}
         else:
@@ -1542,36 +1495,33 @@ def ponyset(**kwargs):
 
 @Parser(category="TravelersCafe",
         description="Отель \"Золотая подкова\"")
-def travelerscafe(**kwargs):
+def travelerscafe(item, category):
     try:
-        item, russian, english, images = kwargs["item"], kwargs["russian"], kwargs["english"], kwargs["images"]
-        mapzones, shopdata, fake, lite = kwargs["mapzones"], kwargs["shopdata"], kwargs["fake"], kwargs["lite"]
-
-        res_icon = fake["house"]
+        res_icon = load_fake(file="house",
+                             category=category)
         res_name_rus, res_name_eng = "", ""
         res_size = ""
 
         # gameobjectdata:
         try:
-            with open(file=images[item.find_all(name="Shop",
-                                                limit=1)[0]["Icon"].replace("gui/",
-                                                                            "").replace(".png",
-                                                                                        "")],
-                      mode="rb") as image_file:
-                res_icon = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                 errors="ignore")
+            icon = load_image(image=item.find_all(name="Shop",
+                                                  limit=1)[0]["Icon"],
+                              category=category)
+
+            if icon:
+                res_icon = icon
         except Exception:
             pass
 
         try:
-            res_name_rus = russian[item.find_all(name="Name",
-                                                 limit=1)[0]["Unlocal"]]
+            res_name_rus = DATA["russian"][item.find_all(name="Name",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
         try:
-            res_name_eng = english[item.find_all(name="Name",
-                                                 limit=1)[0]["Unlocal"]]
+            res_name_eng = DATA["english"][item.find_all(name="Name",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
@@ -1583,7 +1533,7 @@ def travelerscafe(**kwargs):
         except Exception:
             pass
 
-        if lite:
+        if DATA["settings"]["Lite"]:
             return {"Изображение": [res_icon],
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus])}
         else:
@@ -1596,36 +1546,33 @@ def travelerscafe(**kwargs):
 
 @Parser(category="TapableContainer",
         description="")
-def tapablecontainer(**kwargs):
+def tapablecontainer(item, category):
     try:
-        item, russian, english, images = kwargs["item"], kwargs["russian"], kwargs["english"], kwargs["images"]
-        mapzones, shopdata, fake, lite = kwargs["mapzones"], kwargs["shopdata"], kwargs["fake"], kwargs["lite"]
-
-        res_icon = fake["all"]
+        res_icon = load_fake(file="all",
+                             category=category)
         res_name_rus, res_name_eng = "", ""
         res_spawn, res_capping, res_loot = [], [], []
 
         # gameobjectdata:
         try:
-            with open(file=images[item.find_all(name="UI",
-                                                limit=1)[0]["Icon"].replace("gui/",
-                                                                            "").replace(".png",
-                                                                                        "")],
-                      mode="rb") as image_file:
-                res_icon = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                 errors="ignore")
+            icon = load_image(image=item.find_all(name="UI",
+                                                  limit=1)[0]["Icon"],
+                              category=category)
+
+            if icon:
+                res_icon = icon
         except Exception:
             pass
 
         try:
-            res_name_rus = russian[item.find_all(name="UI",
-                                                 limit=1)[0]["TaskName"]]
+            res_name_rus = DATA["russian"][item.find_all(name="UI",
+                                                         limit=1)[0]["TaskName"]]
         except Exception:
             pass
 
         try:
-            res_name_eng = english[item.find_all(name="UI",
-                                                 limit=1)[0]["TaskName"]]
+            res_name_eng = DATA["english"][item.find_all(name="UI",
+                                                         limit=1)[0]["TaskName"]]
         except Exception:
             pass
 
@@ -1652,7 +1599,7 @@ def tapablecontainer(**kwargs):
                                      limit=1)[0].find_all(name="CappingPerMapZone",
                                                           limit=1)[0]:
                 try:
-                    res_capping.append(f"{russian[mapzones[str(i)]].title()}: {sub['Value']}")
+                    res_capping.append(f"{DATA['russian'][DATA['mapzones'][str(i)]].title()}: {sub['Value']}")
                 except Exception:
                     pass
 
@@ -1699,7 +1646,7 @@ def tapablecontainer(**kwargs):
         except Exception:
             pass
 
-        if lite:
+        if DATA["settings"]["Lite"]:
             return {"Изображение": [res_icon],
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus])}
         else:
@@ -1714,36 +1661,33 @@ def tapablecontainer(**kwargs):
 
 @Parser(category="QuestSpecialItem",
         description="Специальные квестовые предметы")
-def questspecialitem(**kwargs):
+def questspecialitem(item, category):
     try:
-        item, russian, english, images = kwargs["item"], kwargs["russian"], kwargs["english"], kwargs["images"]
-        mapzones, shopdata, fake, lite = kwargs["mapzones"], kwargs["shopdata"], kwargs["fake"], kwargs["lite"]
-
-        res_icon = fake["all"]
+        res_icon = load_fake(file="all",
+                             category=category)
         res_name_rus, res_name_eng = "", ""
         res_chance, res_consumable, res_additionally = "", "", []
 
         # gameobjectdata:
         try:
-            with open(file=images[item.find_all(name="QuestSpecialItem",
-                                                limit=1)[0]["Icon"].replace("gui/",
-                                                                            "").replace(".png",
-                                                                                        "")],
-                      mode="rb") as image_file:
-                res_icon = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                 errors="ignore")
+            icon = load_image(image=item.find_all(name="QuestSpecialItem",
+                                                  limit=1)[0]["Icon"],
+                              category=category)
+
+            if icon:
+                res_icon = icon
         except Exception:
             pass
 
         try:
-            res_name_rus = russian[item.find_all(name="QuestSpecialItem",
-                                                 limit=1)[0]["Name"]]
+            res_name_rus = DATA["russian"][item.find_all(name="QuestSpecialItem",
+                                                         limit=1)[0]["Name"]]
         except Exception:
             pass
 
         try:
-            res_name_eng = english[item.find_all(name="QuestSpecialItem",
-                                                 limit=1)[0]["Name"]]
+            res_name_eng = DATA["english"][item.find_all(name="QuestSpecialItem",
+                                                         limit=1)[0]["Name"]]
         except Exception:
             pass
 
@@ -1780,7 +1724,7 @@ def questspecialitem(**kwargs):
         except Exception:
             pass
 
-        if lite:
+        if DATA["settings"]["Lite"]:
             return {"Изображение": [res_icon],
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus])}
         else:
@@ -1795,34 +1739,31 @@ def questspecialitem(**kwargs):
 
 @Parser(category="PonyPart",
         description="Костюмы")
-def ponypart(**kwargs):
+def ponypart(item, category):
     try:
-        item, russian, english, images = kwargs["item"], kwargs["russian"], kwargs["english"], kwargs["images"]
-        mapzones, shopdata, fake, lite = kwargs["mapzones"], kwargs["shopdata"], kwargs["fake"], kwargs["lite"]
-
-        res_icon, res_image = fake["all"], fake["all"]
+        res_icon, res_image = load_fake(file="all",
+                                        category=category), load_fake(file="all",
+                                                                      category=category)
         res_type, res_time, res_cost, res_linked, res_ingredients = "", "", "", "", []
 
         # gameobjectdata:
         try:
-            with open(file=images[item.find_all(name="PonyPart",
-                                                limit=1)[0]["Icon"].replace("gui/",
-                                                                            "").replace(".png",
-                                                                                        "")],
-                      mode="rb") as image_file:
-                res_icon = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                 errors="ignore")
+            icon = load_image(image=item.find_all(name="PonyPart",
+                                                  limit=1)[0]["Icon"],
+                              category=category)
+
+            if icon:
+                res_icon = icon
         except Exception:
             pass
 
         try:
-            with open(file=images[item.find_all(name="PonyPart",
-                                                limit=1)[0]["AltIcon"].replace("gui/",
-                                                                               "").replace(".png",
-                                                                                           "")],
-                      mode="rb") as image_file:
-                res_image = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                  errors="ignore")
+            image = load_image(image=item.find_all(name="PonyPart",
+                                                   limit=1)[0]["AltIcon"],
+                               category=category)
+
+            if image:
+                res_image = image
         except Exception:
             pass
 
@@ -1869,7 +1810,7 @@ def ponypart(**kwargs):
         except Exception:
             pass
 
-        if lite:
+        if DATA["settings"]["Lite"]:
             return {"Изображение": ([res_icon, res_image] if (res_icon != res_image) else [res_icon])}
         else:
             return {"Изображение": ([res_icon, res_image] if (res_icon != res_image) else [res_icon]),
@@ -1884,36 +1825,32 @@ def ponypart(**kwargs):
 
 @Parser(category="Path",
         description="Дорожки")
-def path(**kwargs):
+def path(item, category):
     try:
-        item, russian, english, images = kwargs["item"], kwargs["russian"], kwargs["english"], kwargs["images"]
-        mapzones, shopdata, fake, lite = kwargs["mapzones"], kwargs["shopdata"], kwargs["fake"], kwargs["lite"]
-
-        res_icon = fake["all"]
+        res_icon = load_fake(file="all",
+                             category=category)
         res_name_rus, res_name_eng = "", ""
         res_sity, res_permit = [], ""
 
         # gameobjectdata:
         try:
-            with open(file=images[item.find_all(name="Shop",
-                                                limit=1)[0]["Icon"].replace("gui/",
-                                                                            "").replace(".png",
-                                                                                        "")],
-                      mode="rb") as image_file:
-                res_icon = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                 errors="ignore")
+            icon = load_image(image=item.find_all(name="Shop",
+                                                  limit=1)[0]["Icon"],
+                              category=category)
+            if icon:
+                res_icon = icon
         except Exception:
             pass
 
         try:
-            res_name_rus = russian[item.find_all(name="Name",
-                                                 limit=1)[0]["Unlocal"]]
+            res_name_rus = DATA["russian"][item.find_all(name="Name",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
         try:
-            res_name_eng = english[item.find_all(name="Name",
-                                                 limit=1)[0]["Unlocal"]]
+            res_name_eng = DATA["english"][item.find_all(name="Name",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
@@ -1926,21 +1863,21 @@ def path(**kwargs):
         # shopdata:
         try:
             try:
-                for mz in shopdata[item.find_all(name="PermitID",
-                                                 limit=1)[0]["ID"]]["MapZone"]:
+                for mz in DATA["shopdata"][item.find_all(name="PermitID",
+                                                         limit=1)[0]["ID"]]["MapZone"]:
                     try:
-                        res_sity.append(russian[mapzones[mz]].title())
+                        res_sity.append(DATA["russian"][DATA["mapzones"][mz]].title())
                     except Exception:
                         pass
             except Exception:
                 mz = item.find_all(name="Shop",
                                    limit=1)[0]["MapZone"]
 
-                res_sity.append(russian[mapzones[mz]].title())
+                res_sity.append(DATA["russian"][DATA["mapzones"][mz]].title())
         except Exception:
             pass
 
-        if lite:
+        if DATA["settings"]["Lite"]:
             return {"Изображение": [res_icon],
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus])}
         else:
@@ -1954,36 +1891,33 @@ def path(**kwargs):
 
 @Parser(category="PartySceneDecore",
         description="")
-def partyscenedecore(**kwargs):
+def partyscenedecore(item, category):
     try:
-        item, russian, english, images = kwargs["item"], kwargs["russian"], kwargs["english"], kwargs["images"]
-        mapzones, shopdata, fake, lite = kwargs["mapzones"], kwargs["shopdata"], kwargs["fake"], kwargs["lite"]
-
-        res_image = fake["decore"]
+        res_icon = load_fake(file="all",
+                             category=category)
         res_name_rus, res_name_eng = "", ""
         res_size, res_xp = "", ""
 
         # gameobjectdata:
         try:
-            with open(file=images[item.find_all(name="Shop",
-                                                limit=1)[0]["Icon"].replace("gui/",
-                                                                            "").replace(".png",
-                                                                                        "")],
-                      mode="rb") as image_file:
-                res_image = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                  errors="ignore")
+            icon = load_image(image=item.find_all(name="Shop",
+                                                  limit=1)[0]["Icon"],
+                              category=category)
+
+            if icon:
+                res_icon = icon
         except Exception:
             pass
 
         try:
-            res_name_rus = russian[item.find_all(name="Name",
-                                                 limit=1)[0]["Unlocal"]]
+            res_name_rus = DATA["russian"][item.find_all(name="Name",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
         try:
-            res_name_eng = english[item.find_all(name="Name",
-                                                 limit=1)[0]["Unlocal"]]
+            res_name_eng = DATA["english"][item.find_all(name="Name",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
@@ -2001,11 +1935,11 @@ def partyscenedecore(**kwargs):
         except Exception:
             pass
 
-        if lite:
-            return {"Изображение": [res_image],
+        if DATA["settings"]["Lite"]:
+            return {"Изображение": [res_icon],
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus])}
         else:
-            return {"Изображение": [res_image],
+            return {"Изображение": [res_icon],
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus]),
                     "Размер": res_size,
                     "Опыт за покупку": res_xp}
@@ -2015,49 +1949,46 @@ def partyscenedecore(**kwargs):
 
 @Parser(category="MasterExpansionZone",
         description="")
-def masterexpansionzone(**kwargs):
+def masterexpansionzone(item, category):
     try:
-        item, russian, english, images = kwargs["item"], kwargs["russian"], kwargs["english"], kwargs["images"]
-        mapzones, shopdata, fake, lite = kwargs["mapzones"], kwargs["shopdata"], kwargs["fake"], kwargs["lite"]
-
-        res_icon = fake["all"]
+        res_icon = load_fake(file="all",
+                             category=category)
         res_name_rus, res_name_eng = "", ""
         res_desc_rus, res_desc_eng = "", ""
         res_quest = ""
 
         # gameobjectdata:
         try:
-            with open(file=images[item.find_all(name="Unlock",
-                                                limit=1)[0]["UnavailableImage"].replace("gui/",
-                                                                                        "").replace(".png",
-                                                                                                    "")],
-                      mode="rb") as image_file:
-                res_icon = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                 errors="ignore")
+            icon = load_image(image=item.find_all(name="Unlock",
+                                                  limit=1)[0]["UnavailableImage"],
+                              category=category)
+
+            if icon:
+                res_icon = icon
         except Exception:
             pass
 
         try:
-            res_name_rus = russian[item.find_all(name="Unlock",
-                                                 limit=1)[0]["UnavailableTitle"]]
+            res_name_rus = DATA["russian"][item.find_all(name="Unlock",
+                                                         limit=1)[0]["UnavailableTitle"]]
         except Exception:
             pass
 
         try:
-            res_name_eng = english[item.find_all(name="Unlock",
-                                                 limit=1)[0]["UnavailableTitle"]]
+            res_name_eng = DATA["english"][item.find_all(name="Unlock",
+                                                         limit=1)[0]["UnavailableTitle"]]
         except Exception:
             pass
 
         try:
-            res_desc_rus = russian[item.find_all(name="Unlock",
-                                                 limit=1)[0]["UnavailableText"]]
+            res_desc_rus = DATA["russian"][item.find_all(name="Unlock",
+                                                         limit=1)[0]["UnavailableText"]]
         except Exception:
             pass
 
         try:
-            res_desc_eng = english[item.find_all(name="Unlock",
-                                                 limit=1)[0]["UnavailableText"]]
+            res_desc_eng = DATA["english"][item.find_all(name="Unlock",
+                                                         limit=1)[0]["UnavailableText"]]
         except Exception:
             pass
 
@@ -2067,7 +1998,7 @@ def masterexpansionzone(**kwargs):
         except Exception:
             pass
 
-        if lite:
+        if DATA["settings"]["Lite"]:
             return {"Изображение": [res_icon],
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus])}
         else:
@@ -2081,36 +2012,33 @@ def masterexpansionzone(**kwargs):
 
 @Parser(category="Inn",
         description="")
-def inn(**kwargs):
+def inn(item, category):
     try:
-        item, russian, english, images = kwargs["item"], kwargs["russian"], kwargs["english"], kwargs["images"]
-        mapzones, shopdata, fake, lite = kwargs["mapzones"], kwargs["shopdata"], kwargs["fake"], kwargs["lite"]
-
-        res_icon = fake["house"]
+        res_icon = load_fake(file="all",
+                             category=category)
         res_name_rus, res_name_eng = "", ""
         res_size, res_visitors = "", []
 
         # gameobjectdata:
         try:
-            with open(file=images[item.find_all(name="Icon",
-                                                limit=1)[0]["BookIcon"].replace("gui/",
-                                                                                "").replace(".png",
-                                                                                            "")],
-                      mode="rb") as image_file:
-                res_icon = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                 errors="ignore")
+            icon = load_image(image=item.find_all(name="Icon",
+                                                  limit=1)[0]["BookIcon"],
+                              category=category)
+
+            if icon:
+                res_icon = icon
         except Exception:
             pass
 
         try:
-            res_name_rus = russian[item.find_all(name="Name",
-                                                 limit=1)[0]["Unlocal"]]
+            res_name_rus = DATA["russian"][item.find_all(name="Name",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
         try:
-            res_name_eng = english[item.find_all(name="Name",
-                                                 limit=1)[0]["Unlocal"]]
+            res_name_eng = DATA["english"][item.find_all(name="Name",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
@@ -2134,7 +2062,7 @@ def inn(**kwargs):
         except Exception:
             pass
 
-        if lite:
+        if DATA["settings"]["Lite"]:
             return {"Изображение": [res_icon],
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus])}
         else:
@@ -2148,23 +2076,20 @@ def inn(**kwargs):
 
 @Parser(category="EquestriaGirls",
         description="Костюмы в танцах")
-def equestriagirls(**kwargs):
+def equestriagirls(item, category):
     try:
-        item, russian, english, images = kwargs["item"], kwargs["russian"], kwargs["english"], kwargs["images"]
-        mapzones, shopdata, fake, lite = kwargs["mapzones"], kwargs["shopdata"], kwargs["fake"], kwargs["lite"]
-
-        res_icon, res_icons = fake["all"], []
+        res_icon, res_icons = load_fake(file="all",
+                                        category=category), []
         res_pony = ""
 
         # gameobjectdata:
         try:
-            with open(file=images[item.find_all(name="Icons",
-                                                limit=1)[0]["Icons_Avatar"].replace("gui/",
-                                                                                    "").replace(".png",
-                                                                                                "")],
-                      mode="rb") as image_file:
-                res_icon = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                 errors="ignore")
+            icon = load_image(image=item.find_all(name="Icons",
+                                                  limit=1)[0]["Icons_Avatar"],
+                              category=category)
+
+            if icon:
+                res_icon = icon
         except Exception:
             pass
 
@@ -2174,12 +2099,8 @@ def equestriagirls(**kwargs):
                                                            limit=1)[0]:
                 try:
                     if icon["Value"]:
-                        with open(file=images[icon["Value"].replace("gui/",
-                                                                    "").replace(".png",
-                                                                                "")],
-                                  mode="rb") as image_file:
-                            res_icons.append(b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                                   errors="ignore"))
+                        res_icons.append(load_image(image=icon["Value"],
+                                                    category=category))
                 except Exception:
                     pass
         except Exception:
@@ -2199,36 +2120,33 @@ def equestriagirls(**kwargs):
 
 @Parser(category="DestroyedHouse",
         description="Разрушение дома")
-def destroyedhouse(**kwargs):
+def destroyedhouse(item, category):
     try:
-        item, russian, english, images = kwargs["item"], kwargs["russian"], kwargs["english"], kwargs["images"]
-        mapzones, shopdata, fake, lite = kwargs["mapzones"], kwargs["shopdata"], kwargs["fake"], kwargs["lite"]
-
-        res_icon = fake["house"]
+        res_icon = load_fake(file="house",
+                             category=category)
         res_desc_rus, res_desc_eng = "", ""
         res_size, res_house, res_quest = "", "", ""
 
         # gameobjectdata:
         try:
-            with open(file=images[item.find_all(name="Icon",
-                                                limit=1)[0]["QuestIcon"].replace("gui/",
-                                                                                 "").replace(".png",
-                                                                                             "")],
-                      mode="rb") as image_file:
-                res_icon = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                 errors="ignore")
+            icon = load_image(image=item.find_all(name="Icon",
+                                                  limit=1)[0]["QuestIcon"],
+                              category=category)
+
+            if icon:
+                res_icon = icon
         except Exception:
             pass
 
         try:
-            res_desc_rus = russian[item.find_all(name="Description",
-                                                 limit=1)[0]["Unlocal"]]
+            res_desc_rus = DATA["russian"][item.find_all(name="Description",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
         try:
-            res_desc_eng = english[item.find_all(name="Description",
-                                                 limit=1)[0]["Unlocal"]]
+            res_desc_eng = DATA["english"][item.find_all(name="Description",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
@@ -2252,7 +2170,7 @@ def destroyedhouse(**kwargs):
         except Exception:
             pass
 
-        if lite:
+        if DATA["settings"]["Lite"]:
             return {"Изображение": [res_icon],
                     "Описание": ([res_desc_rus, res_desc_eng] if (res_desc_rus != res_desc_eng) else [res_desc_rus])}
         else:
@@ -2267,47 +2185,44 @@ def destroyedhouse(**kwargs):
 
 @Parser(category="Consumable",
         description="Расходный материал")
-def consumable(**kwargs):
+def consumable(item, category):
     try:
-        item, russian, english, images = kwargs["item"], kwargs["russian"], kwargs["english"], kwargs["images"]
-        mapzones, shopdata, fake, lite = kwargs["mapzones"], kwargs["shopdata"], kwargs["fake"], kwargs["lite"]
-
-        res_icon, res_image = fake["all"], fake["all"]
+        res_icon, res_image = load_fake(file="all",
+                                        category=category), load_fake(file="all",
+                                                                      category=category)
         res_name_rus, res_name_eng = "", ""
         res_time, res_skip, res_consume = "", "", []
 
         # gameobjectdata:
         try:
-            with open(file=images[item.find_all(name="Graphic",
-                                                limit=1)[0]["Sprite"].replace("gui/",
-                                                                              "").replace(".png",
-                                                                                          "")],
-                      mode="rb") as image_file:
-                res_icon = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                 errors="ignore")
+            icon = load_image(image=item.find_all(name="Graphic",
+                                                  limit=1)[0]["Sprite"],
+                              category=category)
+
+            if icon:
+                res_icon = icon
         except Exception:
             pass
 
         try:
-            with open(file=images[item.find_all(name="Production",
-                                                limit=1)[0]["IconProductFrame"].replace("gui/",
-                                                                                        "").replace(".png",
-                                                                                                    "")],
-                      mode="rb") as image_file:
-                res_image = b64encode(s=image_file.read()).decode(encoding="UTF-8",
-                                                                  errors="ignore")
+            image = load_image(image=item.find_all(name="Production",
+                                                   limit=1)[0]["IconProductFrame"],
+                               category=category)
+
+            if image:
+                res_image = image
         except Exception:
             pass
 
         try:
-            res_name_rus = russian[item.find_all(name="Name",
-                                                 limit=1)[0]["Unlocal"]]
+            res_name_rus = DATA["russian"][item.find_all(name="Name",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
         try:
-            res_name_eng = english[item.find_all(name="Name",
-                                                 limit=1)[0]["Unlocal"]]
+            res_name_eng = DATA["english"][item.find_all(name="Name",
+                                                         limit=1)[0]["Unlocal"]]
         except Exception:
             pass
 
@@ -2342,7 +2257,7 @@ def consumable(**kwargs):
         except Exception:
             pass
 
-        if lite:
+        if DATA["settings"]["Lite"]:
             return {"Изображение": ([res_icon, res_image] if (res_icon != res_image) else [res_icon]),
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus])}
         else:
@@ -2351,5 +2266,228 @@ def consumable(**kwargs):
                     "Время": res_time,
                     "Пропуск": res_skip,
                     "Бонусы": (res_consume if (len(res_consume) > 0) else [""])}
+    except Exception:
+        return None
+
+
+@Parser(category="PlayerCardBackground",
+        description="Фоны")
+def playercardbackground(item, category):
+    try:
+        res_icon, res_image = load_fake(file="all",
+                                        category=category), load_fake(file="all",
+                                                                      category=category)
+        bg_image_1, bg_image_2 = load_fake(file="all",
+                                           category=category), load_fake(file="all",
+                                                                         category=category)
+        res_name_rus, res_name_eng = "", ""
+        res_cost = ""
+
+        # gameobjectdata:
+        try:
+            icon = load_image(image=item.find_all(name="Shop",
+                                                  limit=1)[0]["Icon"],
+                              category=category)
+
+            if icon:
+                res_icon = icon
+        except Exception:
+            pass
+
+        try:
+            image = load_image(image=item.find_all(name="Settings",
+                                                   limit=1)[0]["PictureActive"],
+                               category=category)
+
+            if image:
+                res_image = image
+        except Exception:
+            pass
+
+        try:
+            bg_image_1 = load_image(image=item.find_all(name="Settings",
+                                                        limit=1)[0]["BackgroundImage"],
+                                    category=category)
+
+            if bg_image_1:
+                res_image = bg_image_1
+        except Exception:
+            pass
+
+        try:
+            bg_image_2 = load_image(image=item.find_all(name="Settings",
+                                                        limit=1)[0]["BackgroundImageFrame"],
+                                    category=category)
+
+            if bg_image_2:
+                res_image = bg_image_2
+        except Exception:
+            pass
+
+        try:
+            res_name_rus = DATA["russian"][item.find_all(name="Shop",
+                                                         limit=1)[0]["Label"]]
+        except Exception:
+            pass
+
+        try:
+            res_name_eng = DATA["english"][item.find_all(name="Shop",
+                                                         limit=1)[0]["Label"]]
+        except Exception:
+            pass
+
+        # shopdata:
+        try:
+            c_type = DATA["shopdata"][item["ID"]]["CurrencyType"]
+            c_value = DATA["shopdata"][item["ID"]]["Cost"]
+
+            if (c_type != "0") and (c_value != "0"):
+                res_cost = f"{CURRENCY[c_type]}: {c_value}"
+        except Exception:
+            pass
+
+        if DATA["settings"]["Lite"]:
+            return {"Изображение": ([res_image, res_icon] if (res_image != res_icon) else [res_image]),
+                    "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus])}
+        else:
+            return {"Изображение": ([res_image, res_icon] if (res_image != res_icon) else [res_image]),
+                    "Фон": ([bg_image_1, bg_image_2] if (bg_image_1 != bg_image_2) else [bg_image_1]),
+                    "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus]),
+                    "Цена": res_cost}
+    except Exception:
+        return None
+
+
+@Parser(category="PlayerCardBackgroundFrame",
+        description="Рамки фонов")
+def playercardbackgroundframe(item, category):
+    try:
+        res_icon, res_image = load_fake(file="all",
+                                        category=category), load_fake(file="all",
+                                                                      category=category)
+        res_name_rus, res_name_eng = "", ""
+        res_cost = ""
+
+        # gameobjectdata:
+        try:
+            icon = load_image(image=item.find_all(name="Shop",
+                                                  limit=1)[0]["Icon"],
+                              category=category)
+
+            if icon:
+                res_icon = icon
+        except Exception:
+            pass
+
+        try:
+            image = load_image(image=item.find_all(name="Settings",
+                                                   limit=1)[0]["PictureActive"],
+                               category=category)
+
+            if image:
+                res_image = image
+        except Exception:
+            pass
+
+        try:
+            res_name_rus = DATA["russian"][item.find_all(name="Shop",
+                                                         limit=1)[0]["Label"]]
+        except Exception:
+            pass
+
+        try:
+            res_name_eng = DATA["english"][item.find_all(name="Shop",
+                                                         limit=1)[0]["Label"]]
+        except Exception:
+            pass
+
+        # shopdata:
+        try:
+            c_type = DATA["shopdata"][item["ID"]]["CurrencyType"]
+            c_value = DATA["shopdata"][item["ID"]]["Cost"]
+
+            if (c_type != "0") and (c_value != "0"):
+                res_cost = f"{CURRENCY[c_type]}: {c_value}"
+        except Exception:
+            pass
+
+        if DATA["settings"]["Lite"]:
+            return {"Изображение": ([res_image, res_icon] if (res_image != res_icon) else [res_image]),
+                    "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus])}
+        else:
+            return {"Изображение": ([res_image, res_icon] if (res_image != res_icon) else [res_image]),
+                    "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus]),
+                    "Цена": res_cost}
+    except Exception:
+        return None
+
+
+@Parser(category="PlayerCardCutieMark",
+        description="Метки")
+def playercardcutiemark(item, category):
+    try:
+        res_icon, res_image = load_fake(file="all",
+                                        category=category), load_fake(file="all",
+                                                                      category=category)
+        res_name_rus, res_name_eng = "", ""
+        res_pony, res_cost = "", ""
+
+        # gameobjectdata:
+        try:
+            icon = load_image(image=item.find_all(name="Shop",
+                                                  limit=1)[0]["Icon"],
+                              category=category)
+
+            if icon:
+                res_icon = icon
+        except Exception:
+            pass
+
+        try:
+            image = load_image(image=item.find_all(name="Settings",
+                                                   limit=1)[0]["PictureActive"],
+                               category=category)
+
+            if image:
+                res_image = image
+        except Exception:
+            pass
+
+        try:
+            res_name_rus = DATA["russian"][item.find_all(name="Shop",
+                                                         limit=1)[0]["Label"]]
+        except Exception:
+            pass
+
+        try:
+            res_name_eng = DATA["english"][item.find_all(name="Shop",
+                                                         limit=1)[0]["Label"]]
+        except Exception:
+            pass
+
+        try:
+            res_pony = item.find_all(name="Settings",
+                                     limit=1)[0]["PonyStarsID"]
+        except Exception:
+            pass
+
+        # shopdata:
+        try:
+            c_type = DATA["shopdata"][item["ID"]]["CurrencyType"]
+            c_value = DATA["shopdata"][item["ID"]]["Cost"]
+
+            if (c_type != "0") and (c_value != "0"):
+                res_cost = f"{CURRENCY[c_type]}: {c_value}"
+        except Exception:
+            pass
+
+        if DATA["settings"]["Lite"]:
+            return {"Изображение": ([res_image, res_icon] if (res_image != res_icon) else [res_image]),
+                    "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus])}
+        else:
+            return {"Изображение": ([res_image, res_icon] if (res_image != res_icon) else [res_image]),
+                    "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus]),
+                    "За звезды пони": res_pony,
+                    "Цена": res_cost}
     except Exception:
         return None

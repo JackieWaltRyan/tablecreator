@@ -35,7 +35,7 @@ img {
 }
 
 #background {
-    background: #000 url("data:image/png;base64, {{ splash }}") center;
+    background: #000 url("{{ splash }}") center;
     position: fixed;
     z-index: 1;
     left: 0;

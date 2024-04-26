@@ -111,9 +111,9 @@ function createTable(search = (getURL.searchParams.has("search") ? decodeURIComp
 
             for (let param in data[item]) {
                 let td = createElement("td", {}, (el3) => {
-                    if (param === "Изображение") {
+                    if (["Изображение", "Фон"].includes(param)) {
                         let img = createElement("img", {
-                            src: ("data:image/png;base64, " + data[item][param][0])
+                            src: data[item][param][0]
                         }, (el4) => {
                             el4.addEventListener("mousemove", (event) => {
                                 zoomIn(event);
@@ -135,15 +135,15 @@ function createTable(search = (getURL.searchParams.has("search") ? decodeURIComp
                                     el6.innerText = "<";
 
                                     el6.addEventListener("click", () => {
-                                        let index = (data[item][param].findIndex((video) => {
-                                            return (("data:image/png;base64, " + video) === img.src);
+                                        let index = (data[item][param].findIndex((name) => {
+                                            return img.src.includes(name);
                                         }) - 1);
 
                                         if (index < 0) {
                                             index = (data[item][param].length - 1);
                                         }
 
-                                        img.src = ("data:image/png;base64, " + data[item][param][index]);
+                                        img.src = data[item][param][index];
 
                                         span.innerText = ((index + 1) + " из " + data[item][param].length);
                                     });
@@ -160,15 +160,15 @@ function createTable(search = (getURL.searchParams.has("search") ? decodeURIComp
                                     el8.innerText = ">";
 
                                     el8.addEventListener("click", () => {
-                                        let index = (data[item][param].findIndex((video) => {
-                                            return (("data:image/png;base64, " + video) === img.src);
+                                        let index = (data[item][param].findIndex((name) => {
+                                            return img.src.includes(name);
                                         }) + 1);
 
                                         if (index >= data[item][param].length) {
                                             index = 0;
                                         }
 
-                                        img.src = ("data:image/png;base64, " + data[item][param][index]);
+                                        img.src = data[item][param][index];
 
                                         span.innerText = ((index + 1) + " из " + data[item][param].length);
                                     });
@@ -218,8 +218,8 @@ function createTable(search = (getURL.searchParams.has("search") ? decodeURIComp
                                     el6.innerText = "<";
 
                                     el6.addEventListener("click", () => {
-                                        let index = (data[item][param].findIndex((video) => {
-                                            return (video === div.innerText);
+                                        let index = (data[item][param].findIndex((name) => {
+                                            return (name === div.innerText);
                                         }) - 1);
 
                                         if (index < 0) {
@@ -243,8 +243,8 @@ function createTable(search = (getURL.searchParams.has("search") ? decodeURIComp
                                     el8.innerText = ">";
 
                                     el8.addEventListener("click", () => {
-                                        let index = (data[item][param].findIndex((video) => {
-                                            return (video === div.innerText);
+                                        let index = (data[item][param].findIndex((name) => {
+                                            return (name === div.innerText);
                                         }) + 1);
 
                                         if (index >= data[item][param].length) {

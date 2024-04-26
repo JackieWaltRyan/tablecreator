@@ -1,17 +1,17 @@
-import sys
-from base64 import b64encode
 from json import loads, dump, dumps
 from os import walk, makedirs
-from os.path import exists, join, abspath, dirname
+from os.path import exists
+from shutil import rmtree
 from sys import exit
-from traceback import format_exc
 
 from bs4 import BeautifulSoup
 
-from parsers import FUNCTIONS, DESCRIPTIONS
+from parsers import FUNCTIONS
+from utils import DATA, resource_path, load_image, view_size
 
 SETTINGS = {"Categories": {},
-            "Lite": False}
+            "Lite": False,
+            "Hosting": False}
 
 FOLDERS = [["000_and_mlpextra_common"],
            ["000_and_mlpextra_pvr_common", "000_and_mlpextra_astc_pvr_common"],
@@ -21,26 +21,6 @@ FOLDERS = [["000_and_mlpextra_common"],
            ["000_and_mlpextragui_veryhigh/gui", "000_and_mlpextragui_astc_veryhigh/gui"],
            ["000_and_startup_common"],
            ["001_and_mlpdata_veryhigh", "001_and_mlpdata_astc_veryhigh"]]
-
-
-def resource_path(file):
-    try:
-        return join(getattr(sys,
-                            "_MEIPASS",
-                            dirname(p=abspath(path=__file__))),
-                    file)
-    except Exception:
-        print(format_exc())
-
-
-def load_fake():
-    try:
-        with open(file=resource_path(file="fake.json"),
-                  mode="r",
-                  encoding="UTF-8") as fake_json:
-            return loads(s=fake_json.read())
-    except Exception:
-        print(format_exc())
 
 
 def create_file_settings(data=None):
@@ -255,10 +235,7 @@ def find_image_files():
 
                 trigger = False
 
-        if trigger:
-            return image_list
-        else:
-            return None
+        return image_list if trigger else None
     except Exception:
         folders = ", ".join([(", ".join(x) if (len(x) == 2) else x[0]) for x in FOLDERS])
 
@@ -362,18 +339,18 @@ def parse_shopdata():
 
 def create_files_html(data):
     try:
-        splash, trigger, index_html, i = "", True, {}, 1
+        trigger, index_html, index_html_res, i = True, {}, {}, 1
 
-        try:
-            with open(file="000_and_startup_common/mlp_splash.png",
-                      mode="rb") as mlp_splash_png:
-                splash = b64encode(s=mlp_splash_png.read()).decode(encoding="UTF-8",
-                                                                   errors="ignore")
-        except Exception:
-            print("[WARNING] Во время обработки файла 000_and_startup_common/mlp_splash.png возникла ошибка. "
-                  "Возможно данные в файле повреждены или нет прав на чтение файлов.\n")
+        if exists(path="TABLEcreator"):
+            print(f"8: Удаление старой папки TABLEcreator.\n")
 
-            trigger = False
+            try:
+                rmtree(path="TABLEcreator")
+            except Exception:
+                print(f"[ERROR] Во время удаления папки TABLEcreator возникла ошибка. "
+                      f"Возможно нет прав на удаления папок.\n")
+
+                trigger = False
 
         if not exists(path="TABLEcreator"):
             print(f"8: Создание папки TABLEcreator.\n")
@@ -387,7 +364,15 @@ def create_files_html(data):
                 trigger = False
 
         for cat in data:
-            print(f"9: Создание файла TABLEcreator/{cat}.html.\n")
+            folder = "TABLEcreator"
+
+            splash = (load_image(image="mlp_splash",
+                                 category=cat) or "")
+
+            if DATA["settings"]["Hosting"]:
+                folder = f"TABLEcreator/{cat}"
+
+            print(f"9: Создание файла {folder}/{cat}.html.\n")
 
             try:
                 with open(file=resource_path(file="template/template.html"),
@@ -407,7 +392,6 @@ def create_files_html(data):
 
                             html = html.replace("{{ data }}",
                                                 dumps(obj=data[cat],
-                                                      indent=4,
                                                       ensure_ascii=False))
                             html = html.replace("{{ cat }}",
                                                 f"Список {cat}")
@@ -420,19 +404,65 @@ def create_files_html(data):
                             html = html.replace("{{ splash }}",
                                                 splash)
 
-                            with open(file=f"TABLEcreator/{cat}.html",
+                            if not exists(path=folder):
+                                print(f"    Создание папки {folder}.\n")
+
+                                try:
+                                    makedirs(name=folder)
+                                except Exception:
+                                    print(f"[ERROR] Во время создания папки {folder} возникла ошибка. "
+                                          f"Возможно нет прав на создания папок.\n")
+
+                                    trigger = False
+
+                            with open(file=f"{folder}/{cat}.html",
                                       mode="w",
                                       encoding="UTF-8") as output_html:
                                 output_html.write(html)
 
-                            index_html.update({i: {"Изображение": data[cat][1]["Изображение"],
-                                                   "Страница": f"{cat}.html",
-                                                   "Описание": DESCRIPTIONS[cat],
-                                                   "Размер": f"{int(len(html) / 1024 / 1024)} МБ"}})
+                            image = data[cat][1]["Изображение"]
+                            page = (f"{cat}/{cat}.html" if DATA["settings"]["Hosting"] else f"{cat}.html")
+
+                            index_html.update({i: {"Изображение": image,
+                                                   "Страница": page,
+                                                   "Описание": DATA["descriptions"][cat],
+                                                   "Размер": view_size(data=html)}})
+
+                            if DATA["settings"]["Hosting"]:
+                                for img in image:
+                                    index_html_res.update({img: DATA["hosting"][cat][img]})
+
+                if DATA["settings"]["Hosting"]:
+                    print(f"    Сохранение ресурсов...")
+
+                    ii = 1
+
+                    try:
+                        for file in DATA["hosting"][cat]:
+                            print(f"\r        Обработано {ii} из {len(DATA['hosting'][cat])}.",
+                                  end="")
+
+                            with open(file=f"{folder}/{file}",
+                                      mode="wb") as output_res_file:
+                                output_res_file.write(DATA["hosting"][cat][file])
+
+                            ii += 1
+
+                        print("")
+                    except Exception:
+                        print("")
+
+                        print(f"[WARNING] Во время сохранениея ресурсов файла {folder}/{cat}.html возникла ошибка. "
+                              f"Возможно нет прав на создания файлов. "
+                              f"Изображения в этом файле могут отсутствовать!\n")
+
+                        trigger = False
+
+                    print("")
 
                 i += 1
             except Exception:
-                print(f"[WARNING] Во время создания файла TABLEcreator/{cat}.html возникла ошибка. "
+                print(f"[WARNING] Во время создания файла {folder}/{cat}.html возникла ошибка. "
                       f"Возможно нет прав на создания файлов. "
                       f"Файл пропущен.\n")
 
@@ -440,6 +470,9 @@ def create_files_html(data):
 
         try:
             print("10: Создание файла TABLEcreator/index.html.\n")
+
+            splash = (load_image(image="mlp_splash",
+                                 category="index") or "")
 
             with open(file=resource_path(file="template/template.html"),
                       mode="r",
@@ -458,7 +491,6 @@ def create_files_html(data):
 
                         html = html.replace("{{ data }}",
                                             dumps(obj=index_html,
-                                                  indent=4,
                                                   ensure_ascii=False))
                         html = html.replace("{{ cat }}",
                                             "Список всех таблиц")
@@ -475,6 +507,41 @@ def create_files_html(data):
                                   mode="w",
                                   encoding="UTF-8") as output_index_html:
                             output_index_html.write(html)
+
+            if DATA["settings"]["Hosting"]:
+                print(f"    Сохранение ресурсов...")
+
+                iii = 1
+
+                try:
+                    if splash:
+                        with open(file=f"TABLEcreator/mlp_splash.png",
+                                  mode="wb") as output_mlp_splash:
+                            output_mlp_splash.write(DATA["hosting"]["index"]["mlp_splash.png"])
+
+                        iii += 1
+
+                    for file in index_html_res:
+                        print(f"\r        Обработано {iii} из {len(index_html_res) + 1}.",
+                              end="")
+
+                        with open(file=f"TABLEcreator/{file}",
+                                  mode="wb") as output_res_file:
+                            output_res_file.write(index_html_res[file])
+
+                        iii += 1
+
+                    print("")
+                except Exception:
+                    print("")
+
+                    print(f"[WARNING] Во время сохранениея ресурсов файла TABLEcreator/index.html возникла ошибка. "
+                          f"Возможно нет прав на создания файлов. "
+                          f"Изображения в этом файле могут отсутствовать!\n")
+
+                    trigger = False
+
+                print("")
         except Exception:
             print("[WARNING] Во время создания файла TABLEcreator/index.html возникла ошибка. "
                   "Возможно нет прав на создания файлов. "
@@ -490,7 +557,7 @@ def create_files_html(data):
         return False
 
 
-def parse_gameobjectdata(settings, russian, english, images, mapzones, shopdata, fake):
+def parse_gameobjectdata():
     try:
         trigger, all_data = True, {}
 
@@ -500,13 +567,13 @@ def parse_gameobjectdata(settings, russian, english, images, mapzones, shopdata,
 
             trigger = False
 
-        if True not in settings["Categories"].values():
+        if True not in DATA["settings"]["Categories"].values():
             print("[ERROR] В файле настроек TABLEcreator.json не включен ни один параметр. "
                   "Для работы программы нужно включить хотя бы один.\n")
 
             trigger = False
 
-        if trigger and russian and english and images and mapzones and shopdata:
+        if trigger and DATA["russian"] and DATA["english"] and DATA["images"] and DATA["mapzones"] and DATA["shopdata"]:
             print("7: Обработка файла 000_and_mlpextra_common/gameobjectdata.xml.\n")
 
             with open(file="000_and_mlpextra_common/gameobjectdata.xml",
@@ -516,8 +583,8 @@ def parse_gameobjectdata(settings, russian, english, images, mapzones, shopdata,
                                      features="xml").find_all(name="GameObjects",
                                                               limit=1)[0]
 
-                for cat in settings["Categories"]:
-                    if settings["Categories"][cat] and (cat in SETTINGS["Categories"]):
+                for cat in DATA["settings"]["Categories"]:
+                    if DATA["settings"]["Categories"][cat] and (cat in SETTINGS["Categories"]):
                         print(f"    Поиск всех {cat}...")
 
                         try:
@@ -531,13 +598,7 @@ def parse_gameobjectdata(settings, russian, english, images, mapzones, shopdata,
 
                                 if len(item) > 1:
                                     res = FUNCTIONS[cat](item=item,
-                                                         russian=russian,
-                                                         english=english,
-                                                         images=images,
-                                                         mapzones=mapzones,
-                                                         shopdata=shopdata,
-                                                         fake=fake,
-                                                         lite=settings["Lite"])
+                                                         category=cat)
 
                                     if res:
                                         res.update({"ID": item["ID"]})
@@ -552,6 +613,8 @@ def parse_gameobjectdata(settings, russian, english, images, mapzones, shopdata,
 
                             print("")
                         except Exception:
+                            print("")
+
                             print(f"[WARNING] Во время обработки категории {cat} возникла ошибка. "
                                   f"Возможно данные в файле повреждены или нет прав на чтение файлов. "
                                   f"Категория пропущена.\n")
@@ -575,16 +638,19 @@ def parse_gameobjectdata(settings, russian, english, images, mapzones, shopdata,
 
 if __name__ == "__main__":
     try:
-        if parse_gameobjectdata(settings=load_file_settings(),
-                                russian=load_russian_strings(),
-                                english=load_english_strings(),
-                                images=find_image_files(),
-                                mapzones=parse_mapzones(),
-                                shopdata=parse_shopdata(),
-                                fake=load_fake()):
+        DATA.update({"settings": load_file_settings()})
+        DATA.update({"russian": load_russian_strings()})
+        DATA.update({"english": load_english_strings()})
+        DATA.update({"images": find_image_files()})
+        DATA.update({"mapzones": parse_mapzones()})
+        DATA.update({"shopdata": parse_shopdata()})
+
+        if parse_gameobjectdata():
             exit()
         else:
             raise Exception
     except Exception:
+        print("[INFO] Работа программы завершена, но во время работы возникли ошибки!\n")
+
         input()
         exit()
