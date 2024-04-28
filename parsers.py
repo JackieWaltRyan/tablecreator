@@ -196,7 +196,8 @@ def ponypet(item, category):
                     "Дополнительно": (res_additionally if (len(res_additionally) > 0) else [""]),
                     "Город": (res_sity if (len(res_sity) > 0) else [""]),
                     "Уровень открытия": res_level,
-                    "Цена": res_cost}
+                    "Цена": res_cost,
+                    "Магазин": ("Можно купить" if (item["ID"] in DATA["shopdata"]) else "Нельзя купить")}
     except Exception:
         return None
 
@@ -260,7 +261,8 @@ def profileavatarframe(item, category):
         else:
             return {"Изображение": ([res_image, res_icon] if (res_image != res_icon) else [res_image]),
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus]),
-                    "Цена": res_cost}
+                    "Цена": res_cost,
+                    "Магазин": ("Можно купить" if (item["ID"] in DATA["shopdata"]) else "Нельзя купить")}
     except Exception:
         return None
 
@@ -331,7 +333,8 @@ def profileavatar(item, category):
             return {"Изображение": ([res_image, res_icon] if (res_image != res_icon) else [res_image]),
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus]),
                     "За звезды пони": res_pony,
-                    "Цена": res_cost}
+                    "Цена": res_cost,
+                    "Магазин": ("Можно купить" if (item["ID"] in DATA["shopdata"]) else "Нельзя купить")}
     except Exception:
         return None
 
@@ -411,7 +414,8 @@ def progressbooster(item, category):
                     "Тип": res_type,
                     "Время": res_time,
                     "Множитель": res_multiplier,
-                    "Цена": res_cost}
+                    "Цена": res_cost,
+                    "Магазин": ("Можно купить" if (item["ID"] in DATA["shopdata"]) else "Нельзя купить")}
     except Exception:
         return None
 
@@ -596,7 +600,8 @@ def totem(item, category):
                     "Сбор": (res_production if (len(res_production) > 0) else [""]),
                     "Ингредиенты": (res_ingredients if (len(res_ingredients) > 0) else [""]),
                     "Уборка": (res_clearing if (len(res_clearing) > 0) else [""]),
-                    "Цена": res_cost}
+                    "Цена": res_cost,
+                    "Магазин": ("Можно купить" if (item["ID"] in DATA["shopdata"]) else "Нельзя купить")}
     except Exception:
         return None
 
@@ -649,7 +654,8 @@ def ingredient(item, category):
             return {"Изображение": [res_icon],
                     "Имя": [res_name_eng],
                     "Уровень открытия": res_level,
-                    "Цена": res_cost}
+                    "Цена": res_cost,
+                    "Магазин": ("Можно купить" if (item["ID"] in DATA["shopdata"]) else "Нельзя купить")}
     except Exception:
         return None
 
@@ -752,7 +758,8 @@ def theme(item, category):
                     "Погода": res_weather,
                     "Город": (res_sity if (len(res_sity) > 0) else [""]),
                     "Уровень открытия": res_level,
-                    "Цена": res_cost}
+                    "Цена": res_cost,
+                    "Магазин": ("Можно купить" if (item["ID"] in DATA["shopdata"]) else "Нельзя купить")}
     except Exception:
         return None
 
@@ -913,7 +920,8 @@ def decore(item, category):
                     "Опыт за покупку": res_xp,
                     "Город": (res_sity if (len(res_sity) > 0) else [""]),
                     "Уровень открытия": res_level,
-                    "Цена": res_cost}
+                    "Цена": res_cost,
+                    "Магазин": ("Можно купить" if (item["ID"] in DATA["shopdata"]) else "Нельзя купить")}
     except Exception:
         return None
 
@@ -1122,7 +1130,8 @@ def pony_house(item, category):
                     "Дополнительно": (res_additionally if (len(res_additionally) > 0) else [""]),
                     "Город": (res_sity if (len(res_sity) > 0) else [""]),
                     "Уровень открытия": res_level,
-                    "Цена": res_cost}
+                    "Цена": res_cost,
+                    "Магазин": ("Можно купить" if (item["ID"] in DATA["shopdata"]) else "Нельзя купить")}
     except Exception:
         return None
 
@@ -1372,7 +1381,8 @@ def pony(item, category):
                     "Дополнительно": (res_additionally if (len(res_additionally) > 0) else [""]),
                     "Город": (res_sity if (len(res_sity) > 0) else [""]),
                     "Уровень открытия": res_level,
-                    "Цена": res_cost}
+                    "Цена": res_cost,
+                    "Магазин": ("Можно купить" if (item["ID"] in DATA["shopdata"]) else "Нельзя купить")}
     except Exception:
         return None
 
@@ -1884,7 +1894,8 @@ def path(item, category):
             return {"Изображение": [res_icon],
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus]),
                     "ID в магазине": res_permit,
-                    "Город": (res_sity if (len(res_sity) > 0) else [""])}
+                    "Город": (res_sity if (len(res_sity) > 0) else [""]),
+                    "Магазин": ("Можно купить" if (item["ID"] in DATA["shopdata"]) else "Нельзя купить")}
     except Exception:
         return None
 
@@ -2353,7 +2364,8 @@ def playercardbackground(item, category):
             return {"Изображение": ([res_image, res_icon] if (res_image != res_icon) else [res_image]),
                     "Фон": ([bg_image_1, bg_image_2] if (bg_image_1 != bg_image_2) else [bg_image_1]),
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus]),
-                    "Цена": res_cost}
+                    "Цена": res_cost,
+                    "Магазин": ("Можно купить" if (item["ID"] in DATA["shopdata"]) else "Нельзя купить")}
     except Exception:
         return None
 
@@ -2417,7 +2429,8 @@ def playercardbackgroundframe(item, category):
         else:
             return {"Изображение": ([res_image, res_icon] if (res_image != res_icon) else [res_image]),
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus]),
-                    "Цена": res_cost}
+                    "Цена": res_cost,
+                    "Магазин": ("Можно купить" if (item["ID"] in DATA["shopdata"]) else "Нельзя купить")}
     except Exception:
         return None
 
@@ -2488,6 +2501,7 @@ def playercardcutiemark(item, category):
             return {"Изображение": ([res_image, res_icon] if (res_image != res_icon) else [res_image]),
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus]),
                     "За звезды пони": res_pony,
-                    "Цена": res_cost}
+                    "Цена": res_cost,
+                    "Магазин": ("Можно купить" if (item["ID"] in DATA["shopdata"]) else "Нельзя купить")}
     except Exception:
         return None
