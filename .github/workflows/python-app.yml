@@ -2,22 +2,35 @@ name: Build Python Application
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 permissions:
   contents: write
 
 jobs:
   build:
-    runs-on: windows-latest
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            variant: win-x64
+          - os: windows-latest
+            variant: win-arm64
+          - os: ubuntu-latest
+            variant: linux-x64
+          - os: ubuntu-latest
+            variant: linux-arm64
+  
+    runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v4
+      - name: Install Python 3.9
+        uses: actions/setup-python@v5
         with:
           python-version: 3.9
 
@@ -27,8 +40,63 @@ jobs:
           pip install -r requirements.txt
           pip install auto-py-to-exe
 
-      - name: Get module version
-        id: get_module_version
+      - name: Create build windows
+        if: startsWith(matrix.os, "windows-")
+        run: pyinstaller --noconfirm --onefile --add-data "template;template/" --add-data "fake;fake/" --add-data "parsers.py;." --add-data "utils.py;." --name "TABLEcreator_${{ matrix.variant }}.exe" "TABLEcreator.py"
+
+      - name: Create build linux
+        if: startsWith(matrix.os, "ubuntu-")
+        run: pyinstaller --noconfirm --onefile --add-data "template;template/" --add-data "fake;fake/" --add-data "parsers.py;." --add-data "utils.py;." --name "TABLEcreator_${{ matrix.variant }}.bin" "TABLEcreator.py"
+
+      - name: Upload build windows
+        uses: actions/upload-artifact@v4
+        if: startsWith(matrix.os, "windows-")
+        with:
+          name: TABLEcreator_${{ matrix.variant }}.exe
+          path: ./dist/TABLEcreator_${{ matrix.variant }}.exe
+
+      - name: Upload build linux
+        uses: actions/upload-artifact@v4
+        if: startsWith(matrix.os, "ubuntu-")
+        with:
+          name: TABLEcreator_${{ matrix.variant }}.bin
+          path: ./dist/TABLEcreator_${{ matrix.variant }}.bin
+
+  publish:
+    needs: build
+    
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download artifact from windows-latest
+        uses: actions/download-artifact@v4
+        with:
+          name: TABLEcreator_win-x64.exe
+          path: out
+
+      - name: Download artifact from windows-latest
+        uses: actions/download-artifact@v4
+        with:
+          name: TABLEcreator_win-arm64.exe
+          path: out
+
+      - name: Download artifact from ubuntu-latest
+        uses: actions/download-artifact@v4
+        with:
+          name: TABLEcreator_linux-x64.bin
+          path: out
+
+      - name: Download artifact from ubuntu-latest
+        uses: actions/download-artifact@v4
+        with:
+          name: TABLEcreator_linux-arm64.bin
+          path: out
+
+      - name: Create version
+        id: create_version
         shell: python
         run: |
           from datetime import datetime
@@ -39,25 +107,22 @@ jobs:
           DATE_D = int(datetime.now().strftime("%d"))
           TIME = str(int(datetime.now().strftime("%H%M%S"))).rjust(6, "0")
           
-          version = f"v{DATE_Y}.{DATE_M}.{DATE_D}.{TIME}"
-          print(version)
+          VERSION = f"v{DATE_Y}.{DATE_M}.{DATE_D}.{TIME}"
+          
+          print(VERSION)
 
-          with open(getenv("GITHUB_OUTPUT"), "a") as github_output_file:
-              github_output_file.write(f"version={version}")
-        
-      - name: Build distribution
-        run: |
-          pyinstaller --noconfirm --onefile --add-data "template;template/" --add-data "fake;fake/" --add-data "parsers.py;." --add-data "utils.py;." TABLEcreator.py
-        
+          with open(file=getenv("GITHUB_OUTPUT"), mode="a") as github_output_file:
+              github_output_file.write(f"version={VERSION}")
+      
       - name: Create release
-        id: create_release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.get_module_version.outputs.version }}
           name: "TABLE Creator"
-          draft: false
-          prerelease: false
-          body: ${{ steps.get_module_version.outputs.version }}
+          tag_name: ${{ steps.create_version.outputs.version }}
+          body: ${{ steps.create_version.outputs.version }}
           files: |
-            ./dist/TABLEcreator.exe
+            ./out/TABLEcreator_win-x64.exe
+            ./out/TABLEcreator_win-arm64.exe
+            ./out/TABLEcreator_linux-x64.bin
+            ./out/TABLEcreator_linux-arm64.bin
             
