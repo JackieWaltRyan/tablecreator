@@ -46,7 +46,7 @@ jobs:
 
       - name: Create build linux
         if: startsWith(matrix.os, 'ubuntu-')
-        run: pyinstaller --noconfirm --onefile --add-data 'template;template/' --add-data 'fake;fake/' --add-data 'parsers.py;.' --add-data 'utils.py;.' --name 'TABLEcreator_${{ matrix.variant }}.bin' 'TABLEcreator.py'
+        run: pyinstaller --noconfirm --onefile --add-data "template:template/" --add-data "fake:fake/" --add-data "parsers.py:." --add-data "utils.py:." --name "TABLEcreator_${{ matrix.variant }}.bin" "TABLEcreator.py"
 
       - name: Upload build windows
         uses: actions/upload-artifact@v4
