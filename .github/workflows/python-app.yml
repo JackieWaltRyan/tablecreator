@@ -41,23 +41,23 @@ jobs:
           pip install auto-py-to-exe
 
       - name: Create build windows
-        if: startsWith(matrix.os, "windows-")
+        if: startsWith(matrix.os, 'windows-')
         run: pyinstaller --noconfirm --onefile --add-data "template;template/" --add-data "fake;fake/" --add-data "parsers.py;." --add-data "utils.py;." --name "TABLEcreator_${{ matrix.variant }}.exe" "TABLEcreator.py"
 
       - name: Create build linux
-        if: startsWith(matrix.os, "ubuntu-")
+        if: startsWith(matrix.os, 'ubuntu-')
         run: pyinstaller --noconfirm --onefile --add-data "template;template/" --add-data "fake;fake/" --add-data "parsers.py;." --add-data "utils.py;." --name "TABLEcreator_${{ matrix.variant }}.bin" "TABLEcreator.py"
 
       - name: Upload build windows
         uses: actions/upload-artifact@v4
-        if: startsWith(matrix.os, "windows-")
+        if: startsWith(matrix.os, 'windows-')
         with:
           name: TABLEcreator_${{ matrix.variant }}.exe
           path: ./dist/TABLEcreator_${{ matrix.variant }}.exe
 
       - name: Upload build linux
         uses: actions/upload-artifact@v4
-        if: startsWith(matrix.os, "ubuntu-")
+        if: startsWith(matrix.os, 'ubuntu-')
         with:
           name: TABLEcreator_${{ matrix.variant }}.bin
           path: ./dist/TABLEcreator_${{ matrix.variant }}.bin
