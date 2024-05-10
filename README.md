@@ -1,5 +1,8 @@
 # tablecreator
 
+[![GitHub stable release version](https://img.shields.io/github/v/release/JackieWaltRyan/tablecreator.svg?label=Version&logo=github&cacheSeconds=600&style=flat-square)](https://github.com/JackieWaltRyan/tablecreator/releases/latest)
+[![Github stable release downloads](https://img.shields.io/github/downloads/JackieWaltRyan/tablecreator/latest/total.svg?label=Downloads&logo=github&cacheSeconds=600&style=flat-square)![Total downloads](https://img.shields.io/github/downloads/JackieWaltRyan/tablecreator/total.svg?label=%2F&cacheSeconds=600&style=flat-square)](https://github.com/JackieWaltRyan/tablecreator/releases/latest)
+
 My program for generating lookup tables for the mobile game My Little Pony by Gameloft.
 
 4PDA: https://4pda.to/forum/index.php?showtopic=396777&view=findpost&p=121826352
