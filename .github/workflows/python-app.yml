@@ -46,15 +46,17 @@ jobs:
         uses: actions/upload-artifact@v4
         if: startsWith(matrix.os, 'windows-')
         with:
-          name: TABLEcreator[Windows].exe
+          name: "TABLEcreator[Windows].exe"
           path: ./dist/TABLEcreator[Windows].exe
+          if-no-files-found: error
 
       - name: Upload build linux
         uses: actions/upload-artifact@v4
         if: startsWith(matrix.os, 'ubuntu-')
         with:
-          name: TABLEcreator[Linux].bin
+          name: "TABLEcreator[Linux].bin"
           path: ./dist/TABLEcreator[Linux].bin
+          if-no-files-found: error
 
   publish:
     needs: build
@@ -68,13 +70,13 @@ jobs:
       - name: Download artifact from windows-latest
         uses: actions/download-artifact@v4
         with:
-          name: TABLEcreator[Windows].exe
+          name: "TABLEcreator[Windows].exe"
           path: out
 
       - name: Download artifact from ubuntu-latest
         uses: actions/download-artifact@v4
         with:
-          name: TABLEcreator[Linux].bin
+          name: "TABLEcreator[Linux].bin"
           path: out
 
       - name: Create version
