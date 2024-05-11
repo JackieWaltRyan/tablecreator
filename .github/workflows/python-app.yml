@@ -11,13 +11,7 @@ permissions:
 
 jobs:
   build:
-    strategy:
-      matrix:
-        os:
-          - windows-latest
-          - ubuntu-latest
-  
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
 
     steps:
       - name: Checkout
@@ -35,49 +29,7 @@ jobs:
           pip install auto-py-to-exe
 
       - name: Create build windows
-        if: startsWith(matrix.os, 'windows-')
-        run: pyinstaller --noconfirm --onefile --add-data "template;template/" --add-data "fake;fake/" --add-data "parsers.py;." --add-data "utils.py;." --name "TABLEcreator[Windows].exe" "TABLEcreator.py"
-
-      - name: Create build linux
-        if: startsWith(matrix.os, 'ubuntu-')
-        run: pyinstaller --noconfirm --onefile --add-data "template:template/" --add-data "fake:fake/" --add-data "parsers.py:." --add-data "utils.py:." --name "TABLEcreator[Linux].bin" "TABLEcreator.py"
-
-      - name: Upload build windows
-        uses: actions/upload-artifact@v4
-        if: startsWith(matrix.os, 'windows-')
-        with:
-          name: "TABLEcreator[Windows].exe"
-          path: ./dist/TABLEcreator[Windows].exe
-          if-no-files-found: error
-
-      - name: Upload build linux
-        uses: actions/upload-artifact@v4
-        if: startsWith(matrix.os, 'ubuntu-')
-        with:
-          name: "TABLEcreator[Linux].bin"
-          path: ./dist/TABLEcreator[Linux].bin
-          if-no-files-found: error
-
-  publish:
-    needs: build
-    
-    runs-on: windows-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download artifact from windows-latest
-        uses: actions/download-artifact@v4
-        with:
-          name: "TABLEcreator[Windows].exe"
-          path: out
-
-      - name: Download artifact from ubuntu-latest
-        uses: actions/download-artifact@v4
-        with:
-          name: "TABLEcreator[Linux].bin"
-          path: out
+        run: pyinstaller --noconfirm --onefile --add-data "template;template/" --add-data "fake;fake/" --add-data "parsers.py;." --add-data "utils.py;." "TABLEcreator.py"
 
       - name: Create version
         id: create_version
@@ -86,24 +38,23 @@ jobs:
           from datetime import datetime
           from os import getenv
           
-          DATE_Y = int(datetime.now().strftime("%y"))
-          DATE_M = int(datetime.now().strftime("%m"))
-          DATE_D = int(datetime.now().strftime("%d"))
-          TIME = str(int(datetime.now().strftime("%H%M%S"))).rjust(6, "0")
+          DATE_Y = int(datetime.now().strftime(format="%y"))
+          DATE_M = int(datetime.now().strftime(format="%m"))
+          DATE_D = int(datetime.now().strftime(format="%d"))
+          TIME = str(int(datetime.now().strftime(format="%H%M%S"))).rjust(6, "0")
           
           VERSION = f"v{DATE_Y}.{DATE_M}.{DATE_D}.{TIME}"
           
           print(VERSION)
-
-          with open(file=getenv("GITHUB_OUTPUT"), mode="a") as github_output_file:
+          
+          with open(file=getenv(key="GITHUB_OUTPUT"),
+                    mode="a") as github_output_file:
               github_output_file.write(f"version={VERSION}")
-      
+
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
           name: "TABLE Creator"
           tag_name: ${{ steps.create_version.outputs.version }}
           body: ${{ steps.create_version.outputs.version }}
-          files: |
-            ./out/TABLEcreator[Windows].exe
-            ./out/TABLEcreator[Linux].bin
+          files: ./dist/TABLEcreator.exe
