@@ -58,3 +58,4 @@ jobs:
           tag_name: ${{ steps.create_version.outputs.version }}
           body: ${{ steps.create_version.outputs.version }}
           files: ./dist/TABLEcreator.exe
+          fail_on_unmatched_files: true
