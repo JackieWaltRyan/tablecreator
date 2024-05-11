@@ -2,9 +2,9 @@ name: Build Python Application
 
 on:
   push:
-    branches: ["main"]
+    branches: main
   pull_request:
-    branches: ["main"]
+    branches: main
 
 permissions:
   contents: write
@@ -13,15 +13,9 @@ jobs:
   build:
     strategy:
       matrix:
-        include:
-          - os: windows-latest
-            variant: win-x64
-          - os: windows-latest
-            variant: win-arm64
-          - os: ubuntu-latest
-            variant: linux-x64
-          - os: ubuntu-latest
-            variant: linux-arm64
+        os:
+          - windows-latest
+          - ubuntu-latest
   
     runs-on: ${{ matrix.os }}
 
@@ -42,25 +36,25 @@ jobs:
 
       - name: Create build windows
         if: startsWith(matrix.os, 'windows-')
-        run: pyinstaller --noconfirm --onefile --add-data "template;template/" --add-data "fake;fake/" --add-data "parsers.py;." --add-data "utils.py;." --name "TABLEcreator_${{ matrix.variant }}.exe" "TABLEcreator.py"
+        run: pyinstaller --noconfirm --onefile --add-data "template;template/" --add-data "fake;fake/" --add-data "parsers.py;." --add-data "utils.py;." --name "TABLEcreator[Windows].exe" "TABLEcreator.py"
 
       - name: Create build linux
         if: startsWith(matrix.os, 'ubuntu-')
-        run: pyinstaller --noconfirm --onefile --add-data "template:template/" --add-data "fake:fake/" --add-data "parsers.py:." --add-data "utils.py:." --name "TABLEcreator_${{ matrix.variant }}.bin" "TABLEcreator.py"
+        run: pyinstaller --noconfirm --onefile --add-data "template:template/" --add-data "fake:fake/" --add-data "parsers.py:." --add-data "utils.py:." --name "TABLEcreator[Linux].bin" "TABLEcreator.py"
 
       - name: Upload build windows
         uses: actions/upload-artifact@v4
         if: startsWith(matrix.os, 'windows-')
         with:
-          name: TABLEcreator_${{ matrix.variant }}.exe
-          path: ./dist/TABLEcreator_${{ matrix.variant }}.exe
+          name: TABLEcreator[Windows].exe
+          path: ./dist/TABLEcreator[Windows].exe
 
       - name: Upload build linux
         uses: actions/upload-artifact@v4
         if: startsWith(matrix.os, 'ubuntu-')
         with:
-          name: TABLEcreator_${{ matrix.variant }}.bin
-          path: ./dist/TABLEcreator_${{ matrix.variant }}.bin
+          name: TABLEcreator[Linux].bin
+          path: ./dist/TABLEcreator[Linux].bin
 
   publish:
     needs: build
@@ -74,25 +68,13 @@ jobs:
       - name: Download artifact from windows-latest
         uses: actions/download-artifact@v4
         with:
-          name: TABLEcreator_win-x64.exe
-          path: out
-
-      - name: Download artifact from windows-latest
-        uses: actions/download-artifact@v4
-        with:
-          name: TABLEcreator_win-arm64.exe
+          name: TABLEcreator[Windows].exe
           path: out
 
       - name: Download artifact from ubuntu-latest
         uses: actions/download-artifact@v4
         with:
-          name: TABLEcreator_linux-x64.bin
-          path: out
-
-      - name: Download artifact from ubuntu-latest
-        uses: actions/download-artifact@v4
-        with:
-          name: TABLEcreator_linux-arm64.bin
+          name: TABLEcreator[Linux].bin
           path: out
 
       - name: Create version
@@ -121,8 +103,5 @@ jobs:
           tag_name: ${{ steps.create_version.outputs.version }}
           body: ${{ steps.create_version.outputs.version }}
           files: |
-            ./out/TABLEcreator_win-x64.exe
-            ./out/TABLEcreator_win-arm64.exe
-            ./out/TABLEcreator_linux-x64.bin
-            ./out/TABLEcreator_linux-arm64.bin
-            
+            ./out/TABLEcreator[Windows].exe
+            ./out/TABLEcreator[Linux].bin
