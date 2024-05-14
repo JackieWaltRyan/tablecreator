@@ -364,15 +364,16 @@ def create_files_html(data):
                 trigger = False
 
         for cat in data:
-            folder = "TABLEcreator"
+            folder, file = "TABLEcreator", cat
 
             splash = (load_image(image="mlp_splash",
                                  category=cat) or "")
 
             if DATA["settings"]["Hosting"]:
-                folder = f"TABLEcreator/{cat}"
+                folder = f"TABLEcreator/{cat.lower()}"
+                file = "index"
 
-            print(f"9: Создание файла {folder}/{cat}.html.\n")
+            print(f"9: Создание файла {folder}/{file}.html.\n")
 
             try:
                 with open(file=resource_path(file="template/template.html"),
@@ -415,13 +416,13 @@ def create_files_html(data):
 
                                     trigger = False
 
-                            with open(file=f"{folder}/{cat}.html",
+                            with open(file=f"{folder}/{file}.html",
                                       mode="w",
                                       encoding="UTF-8") as output_html:
                                 output_html.write(html)
 
                             image = data[cat][1]["Изображение"]
-                            page = (f"{cat}/{cat}.html" if DATA["settings"]["Hosting"] else f"{cat}.html")
+                            page = (cat.lower() if DATA["settings"]["Hosting"] else f"{cat}.html")
 
                             index_html.update({i: {"Изображение": image,
                                                    "Страница": page,
