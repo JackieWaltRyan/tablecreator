@@ -57,7 +57,7 @@ function createTable(search = (getURL.searchParams.has("search") ? decodeURIComp
     }
 
     tbody.innerHTML = "";
-    loading.style.display = "block";
+    loading.style.display = "flex";
 
     for (let item in data) {
         if (search) {
