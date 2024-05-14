@@ -43,10 +43,17 @@
                 </thead>
                 <tbody id="tbody">
                     <script>
-                        createTable();
+                        if (document.readyState === "loading") {
+                            document.addEventListener("DOMContentLoaded", () => {
+                                createTable();
+                            });
+                        } else {
+                            createTable();
+                        }
                     </script>
                 </tbody>
             </table>
+            <div id="loading">Загрузка...</div>
         </div>
     </body>
 </html>

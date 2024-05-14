@@ -37,6 +37,8 @@ let getURL = new URL(location.href);
 
 function createTable(search = (getURL.searchParams.has("search") ? decodeURIComponent(getURL.searchParams.get("search")) : "")) {
     let thead = document.getElementById("thead");
+    let tbody = document.getElementById("tbody");
+    let loading = document.getElementById("loading");
 
     if (thead.children.length === 0) {
         let th = createElement("th", {}, (el) => {
@@ -54,9 +56,8 @@ function createTable(search = (getURL.searchParams.has("search") ? decodeURIComp
         }
     }
 
-    let tbody = document.getElementById("tbody");
-
     tbody.innerHTML = "";
+    loading.style.display = "block";
 
     for (let item in data) {
         if (search) {
@@ -285,5 +286,6 @@ function createTable(search = (getURL.searchParams.has("search") ? decodeURIComp
         });
 
         tbody.appendChild(tr);
+        loading.style.display = "none";
     }
 }
