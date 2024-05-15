@@ -2288,9 +2288,9 @@ def playercardbackground(item, category):
         res_icon, res_image = load_fake(file="all",
                                         category=category), load_fake(file="all",
                                                                       category=category)
-        bg_image_1, bg_image_2 = load_fake(file="all",
-                                           category=category), load_fake(file="all",
-                                                                         category=category)
+        res_bg_image_1, res_bg_image_2 = load_fake(file="all",
+                                                   category=category), load_fake(file="all",
+                                                                                 category=category)
         res_name_rus, res_name_eng = "", ""
         res_cost = ""
 
@@ -2321,7 +2321,7 @@ def playercardbackground(item, category):
                                     category=category)
 
             if bg_image_1:
-                res_image = bg_image_1
+                res_bg_image_1 = bg_image_1
         except Exception:
             pass
 
@@ -2331,7 +2331,7 @@ def playercardbackground(item, category):
                                     category=category)
 
             if bg_image_2:
-                res_image = bg_image_2
+                res_bg_image_2 = bg_image_2
         except Exception:
             pass
 
@@ -2362,7 +2362,8 @@ def playercardbackground(item, category):
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus])}
         else:
             return {"Изображение": ([res_image, res_icon] if (res_image != res_icon) else [res_image]),
-                    "Фон": ([bg_image_1, bg_image_2] if (bg_image_1 != bg_image_2) else [bg_image_1]),
+                    "Фон": (
+                        [res_bg_image_1, res_bg_image_2] if (res_bg_image_1 != res_bg_image_2) else [res_bg_image_1]),
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus]),
                     "Цена": res_cost,
                     "Магазин": ("Можно купить" if (item["ID"] in DATA["shopdata"]) else "Нельзя купить")}
