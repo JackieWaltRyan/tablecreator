@@ -129,6 +129,8 @@ function createTable(search = (getURL.searchParams.has("search") ? decodeURIComp
                             let div = createElement("div", {
                                 class: "paginator"
                             }, (el5) => {
+                                let index = 0;
+
                                 let but1 = createElement("button", {
                                     class: "paginator_button",
                                     title: "Предыдущий"
@@ -136,9 +138,7 @@ function createTable(search = (getURL.searchParams.has("search") ? decodeURIComp
                                     el6.innerText = "<";
 
                                     el6.addEventListener("click", () => {
-                                        let index = (data[item][param].findIndex((name) => {
-                                            return img.src.includes(name);
-                                        }) - 1);
+                                        index = (index - 1);
 
                                         if (index < 0) {
                                             index = (data[item][param].length - 1);
@@ -161,9 +161,7 @@ function createTable(search = (getURL.searchParams.has("search") ? decodeURIComp
                                     el8.innerText = ">";
 
                                     el8.addEventListener("click", () => {
-                                        let index = (data[item][param].findIndex((name) => {
-                                            return img.src.includes(name);
-                                        }) + 1);
+                                        index = (index + 1);
 
                                         if (index >= data[item][param].length) {
                                             index = 0;
@@ -212,6 +210,8 @@ function createTable(search = (getURL.searchParams.has("search") ? decodeURIComp
                             let div2 = createElement("div", {
                                 class: "paginator"
                             }, (el5) => {
+                                let index = 0;
+
                                 let but1 = createElement("button", {
                                     class: "paginator_button",
                                     title: "Предыдущий"
@@ -219,9 +219,7 @@ function createTable(search = (getURL.searchParams.has("search") ? decodeURIComp
                                     el6.innerText = "<";
 
                                     el6.addEventListener("click", () => {
-                                        let index = (data[item][param].findIndex((name) => {
-                                            return (name === div.innerText);
-                                        }) - 1);
+                                        index = (index - 1);
 
                                         if (index < 0) {
                                             index = (data[item][param].length - 1);
@@ -244,9 +242,7 @@ function createTable(search = (getURL.searchParams.has("search") ? decodeURIComp
                                     el8.innerText = ">";
 
                                     el8.addEventListener("click", () => {
-                                        let index = (data[item][param].findIndex((name) => {
-                                            return (name === div.innerText);
-                                        }) + 1);
+                                        index = (index + 1);
 
                                         if (index >= data[item][param].length) {
                                             index = 0;
