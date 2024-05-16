@@ -28,10 +28,12 @@ def create_file_settings(data=None):
         print("0: Создание файла TABLEcreator.json.\n")
 
         with open(file="TABLEcreator.json",
-                  mode="w") as settings_json:
+                  mode="w",
+                  encoding="UTF-8") as settings_json:
             dump(obj=(data or SETTINGS),
                  fp=settings_json,
-                 indent=4)
+                 indent=4,
+                 ensure_ascii=False)
 
         return data or SETTINGS
     except Exception:
