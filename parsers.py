@@ -1873,8 +1873,7 @@ def path(item, category):
         # shopdata:
         try:
             try:
-                for mz in DATA["shopdata"][item.find_all(name="PermitID",
-                                                         limit=1)[0]["ID"]]["MapZone"]:
+                for mz in DATA["shopdata"][res_permit]["MapZone"]:
                     try:
                         res_sity.append(DATA["russian"][DATA["mapzones"][mz]].title())
                     except Exception:
@@ -1895,7 +1894,7 @@ def path(item, category):
                     "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus]),
                     "ID в магазине": res_permit,
                     "Город": (res_sity if (len(res_sity) > 0) else [""]),
-                    "Магазин": ("Можно купить" if (item["ID"] in DATA["shopdata"]) else "Нельзя купить")}
+                    "Магазин": ("Можно купить" if (res_permit in DATA["shopdata"]) else "Нельзя купить")}
     except Exception:
         return None
 
