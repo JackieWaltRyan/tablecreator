@@ -339,6 +339,30 @@ def parse_shopdata():
         return None
 
 
+def parse_version():
+    try:
+        if exists(path="000_and_mlpextra_common/data_ver.xml"):
+            print("6: Обработка файла 000_and_mlpextra_common/data_ver.xml.\n")
+
+            with open(file="000_and_mlpextra_common/data_ver.xml",
+                      mode="r",
+                      encoding="UTF-8") as version_xml:
+                return BeautifulSoup(markup=version_xml.read(),
+                                     features="xml").find_all(name="Version",
+                                                              limit=1)[0]["Value"]
+        else:
+            print("[ERROR] Отсутствует папка 000_and_mlpextra_common или в ней нет файла data_ver.xml. "
+                  "Разархивируйте архив 000_and_mlpextra_common.ark используя программу ARKdumper. "
+                  "В настройках программы ARKdumper обязательно установите Convert = 1.\n")
+
+            return None
+    except Exception:
+        print("[ERROR] Во время обработки файла 000_and_mlpextra_common/data_ver.xml возникла ошибка. "
+              "Возможно данные в файле повреждены или нет прав на чтение файлов.\n")
+
+        return None
+
+
 def create_files_html(data):
     try:
         trigger, index_html, index_html_res, i = True, {}, {}, 1
@@ -396,6 +420,8 @@ def create_files_html(data):
                             html = html.replace("{{ data }}",
                                                 dumps(obj=data[cat],
                                                       ensure_ascii=False))
+                            html = html.replace("{{ version }}",
+                                                f"\"{DATA['version']}\"")
                             html = html.replace("{{ cat }}",
                                                 f"Список {cat}")
                             html = html.replace("{{ icon }}",
@@ -495,6 +521,8 @@ def create_files_html(data):
                         html = html.replace("{{ data }}",
                                             dumps(obj=index_html,
                                                   ensure_ascii=False))
+                        html = html.replace("{{ version }}",
+                                            f"\"{DATA['version']}\"")
                         html = html.replace("{{ cat }}",
                                             "Список всех таблиц")
                         html = html.replace("{{ icon }}",
@@ -647,6 +675,7 @@ if __name__ == "__main__":
         DATA.update({"images": find_image_files()})
         DATA.update({"mapzones": parse_mapzones()})
         DATA.update({"shopdata": parse_shopdata()})
+        DATA.update({"version": parse_version()})
 
         if parse_gameobjectdata():
             exit()

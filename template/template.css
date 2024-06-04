@@ -43,7 +43,7 @@ img {
     top: 0;
     right: 0;
     bottom: 0;
-    filter: blur(10px);
+    filter: blur(calc(1vw + 1vh));
     background-size: cover;
 }
 

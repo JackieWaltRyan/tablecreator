@@ -1,4 +1,8 @@
 <script>
+    let searchTimeout = null;
+
+    let version = {{ version }};
+
     let data = {{ data }};
 </script>
 
@@ -33,10 +37,23 @@
                                     let input = document.getElementById("input");
 
                                     input.addEventListener("keyup", (event) => {
-                                        createTable(event.target.value);
+                                        clearTimeout(searchTimeout);
+
+                                        searchTimeout = setTimeout(() => {
+                                            createTable(event.target.value);
+                                        }, 2000);
                                     });
                                 </script>
                             </label>
+                        </th>
+                    </tr>
+                    <tr>
+                        <th colspan="100">
+                            <span id="version">
+                                <script>
+                                    document.getElementById("version").innerText = "На данный момент списки созданы для версии игры " + version + ".";
+                                </script>
+                            </span>
                         </th>
                     </tr>
                     <tr id="thead"></tr>
