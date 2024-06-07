@@ -33,9 +33,7 @@ function zoomOut() {
     zoom.style.display = "none";
 }
 
-let getURL = new URL(location.href);
-
-function createTable(search = (getURL.searchParams.has("search") ? decodeURIComponent(getURL.searchParams.get("search")) : "")) {
+function createTable() {
     let thead = document.getElementById("thead");
     let tbody = document.getElementById("tbody");
     let loading = document.getElementById("loading");
@@ -60,17 +58,13 @@ function createTable(search = (getURL.searchParams.has("search") ? decodeURIComp
     loading.style.display = "flex";
 
     for (let item in data) {
-        if (search) {
-            let search_input = document.getElementById("input");
+        if (getURL.searchParams.has("search")) {
+            let search = decodeURIComponent(getURL.searchParams.get("search"));
+
+            let search_input = document.getElementById("search");
 
             if (search_input.value !== search) {
                 search_input.value = search;
-            }
-
-            if (decodeURIComponent(getURL.searchParams.get("search")) !== search) {
-                getURL.searchParams.set("search", encodeURIComponent(search));
-
-                history.pushState(null, null, getURL.href);
             }
 
             let text = item;
@@ -81,18 +75,10 @@ function createTable(search = (getURL.searchParams.has("search") ? decodeURIComp
                 }
             }
 
-            let result = search.split(",").find((item) => {
+            if (!search.split(",").find((item) => {
                 return text.toLowerCase().includes(item.trim().toLowerCase());
-            })
-
-            if (!result) {
+            })) {
                 continue;
-            }
-        } else {
-            if (getURL.searchParams.has("search")) {
-                getURL.searchParams.delete("search");
-
-                history.pushState(null, null, getURL.href);
             }
         }
 

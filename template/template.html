@@ -1,4 +1,6 @@
 <script>
+    let getURL = new URL(location.href);
+
     let searchTimeout = null;
 
     let version = {{ version }};
@@ -16,6 +18,17 @@
         <link rel="icon" type="image/png" href="{{ icon }}"/>
         <link type="text/css" rel="stylesheet" href="template.css"/>
         <script type="text/javascript" src="template.js"></script>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-G9Q1847V56"></script>
+        <script>
+            window.dataLayer = (window.dataLayer || []);
+            
+            function gtag() {
+                dataLayer.push(arguments);
+            }
+            
+            gtag("js", new Date());
+            gtag("config", "G-G9Q1847V56");
+        </script>
         <style>
             {{ style }}
         </style>
@@ -32,15 +45,25 @@
                     <tr>
                         <th colspan="100">
                             <label>
-                                <input id="input" type="text" placeholder="Поиск (можно вводить несколько значений через запятую)"/>
+                                <input id="search" type="search" placeholder="Поиск (можно вводить несколько значений через запятую)"/>
                                 <script>
-                                    let input = document.getElementById("input");
-
-                                    input.addEventListener("keyup", (event) => {
+                                    document.getElementById("search").addEventListener("input", (event) => {
                                         clearTimeout(searchTimeout);
 
                                         searchTimeout = setTimeout(() => {
-                                            createTable(event.target.value);
+                                            if (event["target"]["value"]) {
+                                                getURL.searchParams.set("search", encodeURIComponent(event["target"]["value"]));
+
+                                                history.pushState(null, null, getURL.href);
+                                            } else {
+                                                if (getURL.searchParams.has("search")) {
+                                                    getURL.searchParams.delete("search");
+
+                                                    history.pushState(null, null, getURL.href);
+                                                }
+                                            }
+
+                                            createTable();
                                         }, 2000);
                                     });
                                 </script>
