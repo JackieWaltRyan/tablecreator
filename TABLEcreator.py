@@ -623,6 +623,12 @@ def parse_gameobjectdata():
                                                                          attrs={"ID": cat},
                                                                          limit=1)[0]
 
+                            if cat == "Decore":
+                                items.append(soup.find_all(name="Category",
+                                                           attrs={"ID": "PartySceneDecore"},
+                                                           limit=1)[0].find_all(name="GameObject",
+                                                                                limit=1)[0])
+
                             for item in items:
                                 print(f"\r        Обработано {ii} из {len(items)}.",
                                       end="")

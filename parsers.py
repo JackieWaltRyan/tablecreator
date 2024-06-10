@@ -1899,64 +1899,6 @@ def path(item, category):
         return None
 
 
-@Parser(category="PartySceneDecore",
-        description="")
-def partyscenedecore(item, category):
-    try:
-        res_icon = load_fake(file="all",
-                             category=category)
-        res_name_rus, res_name_eng = "", ""
-        res_size, res_xp = "", ""
-
-        # gameobjectdata:
-        try:
-            icon = load_image(image=item.find_all(name="Shop",
-                                                  limit=1)[0]["Icon"],
-                              category=category)
-
-            if icon:
-                res_icon = icon
-        except Exception:
-            pass
-
-        try:
-            res_name_rus = DATA["russian"][item.find_all(name="Name",
-                                                         limit=1)[0]["Unlocal"]]
-        except Exception:
-            pass
-
-        try:
-            res_name_eng = DATA["english"][item.find_all(name="Name",
-                                                         limit=1)[0]["Unlocal"]]
-        except Exception:
-            pass
-
-        try:
-            size = int(int(item.find_all(name="GridData",
-                                         limit=1)[0]["Size"]) / 2)
-
-            res_size = f"{size}x{size}"
-        except Exception:
-            pass
-
-        try:
-            res_xp = item.find_all(name="OnPurchase",
-                                   limit=1)[0]["EarnXP"]
-        except Exception:
-            pass
-
-        if DATA["settings"]["Lite"]:
-            return {"Изображение": [res_icon],
-                    "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus])}
-        else:
-            return {"Изображение": [res_icon],
-                    "Имя": ([res_name_rus, res_name_eng] if (res_name_rus != res_name_eng) else [res_name_rus]),
-                    "Размер": res_size,
-                    "Опыт за покупку": res_xp}
-    except Exception:
-        return None
-
-
 @Parser(category="MasterExpansionZone",
         description="")
 def masterexpansionzone(item, category):
