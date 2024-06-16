@@ -1,3 +1,6 @@
+let getURL = new URL(location.href);
+let searchTimeout = null;
+
 function createElement(tag, params = {}, actions = () => {
 }) {
     let el = document.createElement(tag);
@@ -270,4 +273,145 @@ function createTable() {
         tbody.appendChild(tr);
         loading.style.display = "none";
     }
+}
+
+function scrollMenu() {
+    let scrollRoot = null;
+    let scrollIcon = null;
+
+    let scrollOld = 0;
+
+    document.querySelector("body").appendChild(createElement("div", {
+        class: "scroll",
+    }, (el) => {
+        scrollRoot = el;
+
+        el.appendChild(createElement("img", {
+            class: "scroll_icon",
+            src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIGZpbGw9JyNmZmYnIHZpZXdCb3g9JzAgMCA4IDgnPjxwYXRoIGQ9J001LjI1IDBsLTQgNCA0IDQgMS41LTEuNS0yLjUtMi41IDIuNS0yLjUtMS41LTEuNXonLz48L3N2Zz4="
+        }, (el2) => {
+            scrollIcon = el2;
+        }));
+
+        el.addEventListener("click", () => {
+            if (scrollY > 0) {
+                scrollOld = scrollY;
+
+                scrollTo(scrollX, 0);
+            } else {
+                scrollTo(scrollX, scrollOld);
+
+                scrollOld = 0;
+            }
+        });
+    }));
+
+    if (scrollY > 0) {
+        scrollRoot.style.display = "flex";
+
+        scrollIcon.style.transform = "rotate(90deg)";
+    }
+
+    window.addEventListener("scroll", () => {
+        if (scrollY > 0) {
+            scrollRoot.style.display = "flex";
+
+            scrollIcon.style.transform = "rotate(90deg)";
+        } else if ((scrollY === 0) && (scrollOld > 0)) {
+            scrollRoot.style.display = "flex";
+
+            scrollIcon.style.transform = "rotate(270deg)";
+        } else {
+            scrollRoot.style.display = "none";
+        }
+    });
+}
+
+function loadGoogle() {
+    let tag = "G-G9Q1847V56";
+
+    document.querySelector("head").appendChild(createElement("script", {
+        type: "text/javascript",
+        src: ("https://www.googletagmanager.com/gtag/js?id=" + tag)
+    }, (el) => {
+        el.addEventListener("load", () => {
+            window.dataLayer = (window.dataLayer || []);
+
+            function gtag() {
+                dataLayer.push(arguments);
+            }
+
+            gtag("js", new Date());
+            gtag("config", tag);
+        });
+
+        el.addEventListener("error", () => {
+            setTimeout(() => {
+                loadGoogle();
+            }, 1000);
+        });
+    }));
+}
+
+function loadEruda() {
+    window.getURL = (window.getURL || new URL(location.href));
+
+    if (getURL.searchParams.has("dev")) {
+        document.querySelector("head").appendChild(createElement("script", {
+            type: "text/javascript",
+            src: "https://cdn.jsdelivr.net/npm/eruda@3.0.1/eruda.min.js"
+        }, (el) => {
+            el.addEventListener("load", () => {
+                eruda.init();
+            });
+
+            el.addEventListener("error", () => {
+                setTimeout(() => {
+                    loadEruda();
+                }, 1000);
+            });
+        }));
+    }
+}
+
+function bindSearch() {
+    document.getElementById("search").addEventListener("input", (event) => {
+        clearTimeout(searchTimeout);
+
+        searchTimeout = setTimeout(() => {
+            if (event["target"]["value"]) {
+                getURL.searchParams.set("search", encodeURIComponent(event["target"]["value"]));
+
+                history.pushState(null, null, getURL.href);
+            } else {
+                if (getURL.searchParams.has("search")) {
+                    getURL.searchParams.delete("search");
+
+                    history.pushState(null, null, getURL.href);
+                }
+            }
+
+            createTable();
+        }, 2000);
+    });
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+        scrollMenu();
+
+        loadGoogle();
+        loadEruda();
+
+        bindSearch();
+        createTable();
+    });
+} else {
+    scrollMenu();
+
+    loadGoogle();
+    loadEruda();
+
+    bindSearch();
+    createTable();
 }

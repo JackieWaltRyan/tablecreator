@@ -1,8 +1,4 @@
 <script>
-    let getURL = new URL(location.href);
-
-    let searchTimeout = null;
-
     let version = {{ version }};
 
     let data = {{ data }};
@@ -18,17 +14,6 @@
         <link rel="icon" type="image/png" href="{{ icon }}"/>
         <link type="text/css" rel="stylesheet" href="template.css"/>
         <script type="text/javascript" src="template.js"></script>
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-G9Q1847V56"></script>
-        <script>
-            window.dataLayer = (window.dataLayer || []);
-            
-            function gtag() {
-                dataLayer.push(arguments);
-            }
-            
-            gtag("js", new Date());
-            gtag("config", "G-G9Q1847V56");
-        </script>
         <style>
             {{ style }}
         </style>
@@ -46,27 +31,6 @@
                         <th colspan="100">
                             <label>
                                 <input id="search" type="search" placeholder="Поиск (можно вводить несколько значений через запятую)"/>
-                                <script>
-                                    document.getElementById("search").addEventListener("input", (event) => {
-                                        clearTimeout(searchTimeout);
-
-                                        searchTimeout = setTimeout(() => {
-                                            if (event["target"]["value"]) {
-                                                getURL.searchParams.set("search", encodeURIComponent(event["target"]["value"]));
-
-                                                history.pushState(null, null, getURL.href);
-                                            } else {
-                                                if (getURL.searchParams.has("search")) {
-                                                    getURL.searchParams.delete("search");
-
-                                                    history.pushState(null, null, getURL.href);
-                                                }
-                                            }
-
-                                            createTable();
-                                        }, 2000);
-                                    });
-                                </script>
                             </label>
                         </th>
                     </tr>
@@ -81,17 +45,7 @@
                     </tr>
                     <tr id="thead"></tr>
                 </thead>
-                <tbody id="tbody">
-                    <script>
-                        if (document.readyState === "loading") {
-                            document.addEventListener("DOMContentLoaded", () => {
-                                createTable();
-                            });
-                        } else {
-                            createTable();
-                        }
-                    </script>
-                </tbody>
+                <tbody id="tbody"></tbody>
             </table>
             <div id="loading">Загрузка...</div>
         </div>
