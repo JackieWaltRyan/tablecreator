@@ -349,7 +349,7 @@ def parse_version():
                       encoding="UTF-8") as version_xml:
                 return BeautifulSoup(markup=version_xml.read(),
                                      features="xml").find_all(name="Version",
-                                                              limit=1)[0]["Value"]
+                                                              limit=1)[0]["Value"][:-2]
         else:
             print("[ERROR] Отсутствует папка 000_and_mlpextra_common или в ней нет файла data_ver.xml. "
                   "Разархивируйте архив 000_and_mlpextra_common.ark используя программу ARKdumper. "
